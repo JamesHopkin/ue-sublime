@@ -1,0 +1,42 @@
+%YAML 1.2
+---
+name: ini (UE4)
+
+scope: source.ini
+extensions: [ini]
+
+contexts:
+  prototype:
+    - match: ;.*
+      scope: comment
+
+    - match: '"'
+      push:
+      - meta_scope: string
+      - match: '\\[\\bnrt"]'
+        scope: constant.character.escape
+      - match: '"'
+        pop: true
+    - match: "'"
+      push:
+        - meta_scope: string
+        - match: (?<!\\)'
+          pop: true
+
+  main:
+    - match: ^([+-])?(\w+(?:\.\w+)*)(=)
+      captures:
+        1: keyword.operator
+        2: variable
+        3: keyword.operator
+    - match: '\[(.*)\]'
+      scope: 'entity.function' # todo: make this detect operators etc
+
+    - match: '[()=,]'
+      scope: keyword.operator
+
+    - match: '(True|False|None|true|false|none)'
+      scope: constant
+
+    - match: '(?<!\w)(\.\d+|\d+\.?\d*)([Ee]\d+)?[Uu]?[FfLl]?\b'
+      scope: constant.numeric.c

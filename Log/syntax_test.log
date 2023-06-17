@@ -1,0 +1,99 @@
+// SYNTAX TEST "log.sublime-syntax"
+
+
+[2023.02.09-14.22.49:913][550]LogWoo: Display: with 'string' message
+// <- meta.preprocessor.c comment
+//          ^^ meta.preprocessor.c numeric
+//            ^ meta.preprocessor.c operator
+//             ^^ meta.preprocessor.c numeric
+//               ^ meta.preprocessor.c operator
+//                ^^ meta.preprocessor.c numeric
+//                  ^^^^^^^^^^ meta.preprocessor.c comment
+//                            ^^^^^^ variable
+//                                  ^ keyword.operator
+//                                    ^^^^^^^  variable
+//                                           ^ keyword.operator
+//                                                  ^^^^^^^^ string
+
+also "double" quotes
+//   ^^^^^^^^ string
+
+2023/02/09 14:22:49.913 LogWoo: Warning: contains 1234.23 (decimal)
+// <- meta.preprocessor.c comment
+//         ^^ meta.preprocessor.c numeric
+//           ^ meta.preprocessor.c operator
+//            ^^ meta.preprocessor.c numeric
+//              ^ meta.preprocessor.c operator
+//               ^^ meta.preprocessor.c numeric
+//                 ^^^^ meta.preprocessor.c comment
+//                      ^^^^^^ variable
+//                            ^ keyword.operator
+//                              ^^^^^^^ support.function
+//                                     ^ keyword.operator
+//                                                ^^^^ constant.numeric
+
+LogWoo: Error: hex 0x12ab starting with 0x
+// <- variable
+//    ^ keyword.operator
+//      ^^^^^ constant
+//                 ^^^^^^ constant.numeric
+
+LogWoo: Verbose: hex 48377626441A8a2611E82BB1BE177D59 with 16 entries, upper and lower case
+// <- variable
+//    ^ keyword.operator
+//      ^^^^^^^ variable
+//             ^ keyword.operator
+//                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ constant.numeric
+//                                                         ^^ constant.numeric
+
+don't know why GUIDs 48377626-441A-8a26-11E8-2BB1BE177D59 are shown as functions
+//                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.function
+
+LogWoo: VeryVerbose: with true and false
+// <- variable
+//    ^ keyword.operator
+//      ^^^^^^^^^^^ variable
+//                 ^ keyword.operator
+//                        ^^^^ constant.boolean
+//                                 ^^^^^ constant.boolean
+
+LogWoo: Display: with Type::Member
+// <- variable
+//    ^ keyword.operator
+//      ^^^^^^^ variable
+//             ^ keyword.operator
+//                    ^^^^ storage.type
+//                        ^^ keyword.operator
+//                          ^^^^^^ storage.type
+
+some oddities to look out for real uses:
+
+why times like 23 Jun 11:22:33?
+//             ^^^^^^^^^^^^^^^ meta.preprocessor
+
+
+
+
+also why particularly (123) format?
+//                    ^ keyword.operator
+//                        ^ keyword.operator
+//                     ^^^ constant.numeric
+
+highlight http://localhost/ or any URL, including https://secure?x=2&y=3
+//        ^^^^^^^^^^^^^^^^^ string
+//                                                ^^^^^^^^^^^^^^^^^^^^^^ string
+
+check (https://secure:123?x=2&y=3) with brackest and port
+//     ^^^^^^^^^^^^^^^^^^^^^^^^^^ string
+
+don't
+
+also  /a/b/c  root paths but not =0/3
+//    ^^^^^^ string
+//                               ^ constant.numeric
+//                                 ^ constant.numeric
+
+support c:/blah and ../blah too
+//      ^^^^^^^ string
+//                  ^^^^^^^ string
+

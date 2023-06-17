@@ -1,0 +1,19 @@
+[
+	{"keys": ["ctrl+alt+f"], "command": "open_dir", "args": {"dir": "$file_path", "file": "$file_name"}},
+	{"keys": ["ctrl+alt+w"], "command": "close_others"},
+
+	{"keys": ["ctrl+alt+o"], "command": "focus_output"},
+
+	{"keys": ["alt+o"], "command": "goto_header_source"},
+
+	{"keys": ["ctrl+shift+v"], "command": "paste_from_history"},
+
+	{"keys": ["ctrl+shift+c"], "command": "build", "args": {"variant": "Clean"}},
+
+	{"keys": ["ctrl+i"], "command": "indent_and_braces"},
+
+	{"keys": ["ctrl+shift+."], "command": "toggle_tabs"},
+
+	{"keys": ["ctrl+shift+e"], "command": "p4_edit"},
+	{"keys": ["ctrl+shift+a"], "command": "p4_add"},
+]

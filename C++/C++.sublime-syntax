@@ -1,0 +1,839 @@
+%YAML 1.2
+---
+name: C++ (Unreal)
+
+scope: source.c++
+extensions: ["cpp", "h", "inl"]
+variables:
+  ident: '[A-Za-z_][A-Za-z_0-9]*'
+  cppident: '(?:{{ident}}\s*(::)\s*)*{{ident}}(?<!template)\b'
+# actor, enum, type, interface, Slate, template, UObject
+  ue4type: '\b[AEFISTU][A-Z][A-Za-z0-9_]+\b'
+  hex_digit: '[0-9a-fA-F'']'
+  operator: '[\-\[\]+/*<>.^&|%!=~:,()?;]'
+  begin: '(?<=\s|^|{{operator}}|[{}])'
+  end: '(?=\s|$|{{operator}}|[{}])'
+  access: 'public|private|protected'
+  printf: '%(?:\d+$)?[+-]?(?:[ 0]|''.{1})?-?\d*(?:\.\d+)?[bcdeEufFgGosxX]'
+  string_esc: '\\(?:[\\bnrt]'
+contexts:
+  prototype:
+  - match: //
+    push:
+    - meta_scope: comment
+    - match: '(?i)@?todo'
+      scope: meta.preprocessor.c.ue4
+    - match: '$|\n'
+      pop: true
+
+  - match: /\*\*/
+    scope: comment
+
+  - match: /\*\*
+    scope: comment
+    push:
+    - meta_scope: meta.preprocessor.c
+    - match: '(?i)@?todo'
+      scope: support.type.ue4
+    - match: '^\s*(\*)\s*(?!/)(@{{ident}})?'
+      captures:
+        1: comment
+        2: support.type.ue4
+    - match: \*/
+      scope: comment
+      pop: true
+
+  - match: /\*
+    push:
+    - meta_scope: comment
+    - match: '(?i)@?todo'
+      scope: meta.preprocessor.c.ue4
+    - match: \*/
+      pop: true
+
+  - match: '(L?)"'
+    scope: punctuation.definition.string.begin
+    push:
+      - meta_scope: string.double-quote
+      - match: '{{string_esc}}|")'
+        scope: constant.character.escape
+      - match: '{{printf}}'
+        scope: keyword.control
+      - match: '"'
+        pop: true
+  - match: '(L?)'''
+    push:
+      - meta_scope: string.single-quote
+      - match: '\\[\\''bnrt]'
+        scope: constant.character.escape
+      - match: ''''
+        pop: true
+
+  - match: '\b(TEXT\()\s*(")'
+    captures:
+      1: comment
+      2: punctuation.definition.string.begin
+    push:
+      - meta_scope: string.double-quote
+      - match: '{{string_esc}}|")'
+        scope: constant.character.escape
+      - match: '{{printf}}'
+        scope: keyword.control
+      - match: '"\s*[^)\s]'
+        scope: invalid.illegal
+        pop: true
+      - match: '(")\s*(\))'
+        captures:
+          1: punctuation.definition.string.end
+          2: comment
+        pop: true
+      - match: '$\n'
+        scope: invalid.illegal
+        pop: true
+  - match: '(TEXT\()('')'
+    captures:
+      1: comment
+      2: punctuation.definition.string.begin
+    push:
+      - meta_scope: string.single-quote
+      - match: '{{string_esc}}|'')'
+        scope: constant.character.escape
+      - match: '('')(\))'
+        captures:
+          1: punctuation.definition.string.end
+          2: comment
+        pop: true
+      - match: '$\n'
+        scope: invalid.illegal
+        pop: true
+
+  - match: '(?<!\.)\.{3}(?!\.)'
+    scope: storage.type
+
+  - match: '{{begin}}-?(\.\d+|\d+\.?\d*)([Ee]\d+)?[Uu]?[FfLl]?{{end}}'
+    scope: constant.numeric.c
+  - match: '{{begin}}-?0[xX]({{hex_digit}}+\.?{{hex_digit}}*|\.{{hex_digit}}+)([Pp]\d+)?[Uu]?[FfLl]*{{end}}'
+    scope: constant.numeric.c
+
+  - match: '^\s*(#)\s*(error|message)(.*)'
+    scope: meta.preprocessor.c
+    captures:
+      2: keyword.control.import
+      3: meta.preprocessor.error
+
+  - match: '^\s*(#)\s*(if)\s+(?:(0))'
+    scope: meta.preprocessor.c
+    captures:
+      2: keyword.control.import
+      3: constant.numeric
+      4: meta.preprocessor.c
+    push:
+    - meta_content_scope: comment
+    - match: '^\s*(#)\s*(if)\b'
+      push: inside-if0
+
+    - match: '^\s*(#)\s*(endif|else)'
+      scope: meta.preprocessor.c
+      captures:
+        2: keyword.control.import
+      pop: true
+
+  - match: \b(true|false|nullptr)\b
+    scope: constant.language
+  - match: \b(alignas|alignof|and|and_eq|bitand|bitor|compl|decltype|not|not_eq|or|or_eq|sizeof|xor|xor_eq)\b
+    scope: keyword.operator
+  - match: \b(break|catch|continue|default|delete|do|else|for|goto|if(\s+constexpr)?|new|requires|return|static_assert|switch|throw|try|typeid|while)\b
+    scope: keyword.control
+  - match: \b(const_cast|dynamic_cast|reinterpret_cast|static_cast)\b
+    scope: keyword.cast
+  - match: \b(const|constexpr|explicit|export|extern|final|friend|inline|mutable|noexcept|override|register|static|thread_local|typename|volatile)\b
+    scope: storage.modifier
+
+  inside-if0:
+  - match: '^\s*(#)\s*(if)\b'
+    push: inside-if0
+  - match: '^\s*(#)\s*(endif|else)'
+    pop: true
+  - match: .*
+    scope: comment
+
+
+  main:
+
+  # utter hack (typename T<X>::Type(wooble))
+  - match: '(::)(Type)(\()'
+    captures:
+      1: keyword.operator
+      2: support.type.ue4
+      3: keyword.operator
+
+  - match: '\b(namespace)(?:\s+({{ident}}))?\b'
+    captures:
+      1: storage.type
+      2: entity.name.type.namespace
+    push:
+    - meta_scope: meta.namespace-block.c++
+    - match: '(?<=});\s*'
+      scope: invalid.illegal.redundant-semicolon
+      pop: true
+    - match: '(?<=})'
+      pop: true
+    - include: $top_level_main
+
+  - comment: '--- UE4 ---'
+    match: |-
+        (?x)(
+          UCLASS|USTRUCT|UENUM|UINTERFACE|DEPRECATED|PROPERTY_BINDING_IMPLEMENTATION|
+          GENERATED_(?:USTRUCT_|UCLASS_|UINTERFACE_|IINTERFACE_)?BODY|UFUNCTION|UPROPERTY|
+          ENUM_CLASS_FLAGS|ENUM_RANGE_BY_(?:[A-Z_]+)|ASSET_(?:[A-Z_]*)ACCESSOR(?:[A-Z_]*))(\()
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
+
+    push: ue4-meta
+
+  - comment: '--- UE4 ---'
+    match: \b(Expose_TNameOf|(?:BEGIN|END)_(?:ONLINE_)?JSON_SERIALIZER|(?:ONLINE_)?JSON_SERIALIZE[A-Z_]*)\b
+    scope: support.type.ue4
+
+  - comment: '--- UE4 ---'
+    match: '\b(FUNCTION_CHECK_RETURN)(\()'
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
+
+  - comment: '--- UE4 (Slate) ---'
+    match: '(SLATE_[A-Z_]+)(\()'
+    captures:
+      1: storage.type.ue4
+      2: keyword.operator
+    push: ue4-meta
+
+  - comment: '--- EOS ---'
+    match: '(EOS_ENUM)(\()\s*({{ident}})'
+    captures:
+      1: support.type.eos
+      2: keyword.operator
+      3: entity.name.type
+    push:
+    - meta_scope: meta.enum.eos
+    - match: \)
+      pop: true
+
+  - comment: '--- EOS ---'
+    match: '(EOS_DECLARE_FUNC)(\()'
+    captures:
+      1: support.type.eos
+      2: keyword.operator
+
+  # - match: '(using\s+namespace\s+{{ident}})\s*(;)'
+  #   captures:
+  #     1: storage.type
+  #     2: keyword.operator
+
+  - match: using
+    scope: keyword.control
+    push:
+    - match: '({{ident}})\s*(;|=)'
+      captures:
+        1: entity.name.type # could be type or function
+        2: keyword.operator
+      pop: true
+
+    - match: ;
+      scope: keyword.operator
+      pop: true
+
+    - include: common
+
+  - include: class-decl
+
+  - match: |-
+      (?x)
+        (enum(?:\s+class)?)\s+
+        ({{ident}})
+        (?:\s*(:)\s*({{ident}}))?
+        \s*(;)
+    captures:
+      1: storage.type
+      2: storage.type
+      3: keyword.operator
+      4: entity.other.inherited-class
+      5: keyword.operator
+
+  - match: '{{begin}}(enum(?:\s+class)?)\b(\s+{{ident}}\b)?'
+    captures:
+      1: storage.type
+      2: entity.name.type.c++
+    push: enum
+
+  - match: '{'
+    push:
+    - meta_scope: meta.block.c
+
+    - comment: "Try out having colon introduce a constructor init list scope"
+      match: '(?<=\s|\()\s*:(?!:)'
+      push:
+        - meta_scope: init-list
+        - match: '(?=[{;])'
+          pop: true
+        - include: common
+
+    - match: '}'
+      pop: true
+    - include: $top_level_main
+
+  - comment: '--- UE4 DECLARE_ macros ---'
+    match: |-
+      {{begin}}(?x)
+        (DECLARE_[A-Z_]*DELEGATE_RetVal\w*)   # 1
+        \s*(\()                                  # 2
+          (?:      # 3               4/5            6
+            \s*(class|struct)?\s*({{cppident}})\s*([*&])?\s*
+              |
+            [^,]*   # complicated expression above failing shouldn't fail match
+          )
+        # 7       8
+        (,)\s*({{ident}})
+    captures:
+      1: support.type.delegate.ue4
+      2: keyword.operator
+      3: storage.type.ue4
+      4: storage.type
+      5: keyword.operator
+      6: keyword.operator
+      7: keyword.operator
+      8: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(DECLARE_[A-Z_]*DELEGATE\w*)\s*(\()\s*({{ident}})'
+    captures:
+      1: support.type.delegate.ue4
+      2: keyword.operator
+      3: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(REGISTER_NAME)(\()\s*({{ident}})'
+    captures:
+      1: support.type.delegate.ue4
+      2: keyword.operator
+      3: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(DECLARE_EVENT\w*)(\()\s*({{ident}})\s*(,)\s*({{ident}})'
+    captures:
+      1: support.type.event.ue4
+      2: keyword.operator
+      3: storage.type
+      4: keyword.operator
+      5: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(DECLARE_DERIVED_EVENT\w*)(\()\s*({{ident}})\s*(,)\s*({{ident}})(::)({{ident}})\s*(,)\s*({{ident}})'
+    captures:
+      1: support.type.event.ue4
+      2: keyword.operator
+      3: storage.type
+      4: keyword.operator
+      5: storage.type
+      6: keyword.operator
+      7: storage.type
+      8: keyword.operator
+      9: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(DEFINE_LATENT_AUTOMATION_COMMAND\w*)\s*(\()\s*({{ident}})'
+    captures:
+      1: support.type.command.ue4
+      2: keyword.operator
+      3: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '((?:DE(?:CLARE|FINE)|IMPLEMENT)_\w+|SAFE_BOOL_OPERATORS)(\()'
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(BEGIN_DEFINE_SPEC)(\()\s*({{ident}})'
+    captures:
+      1: support.type.delegate.ue4
+      2: keyword.operator
+      3: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(DECLARE_DERIVED_EVENT\w*)(\()\s*({{ident}})\s*(,)\s*({{ident}})(::)({{ident}})\s*(,)\s*({{ident}})'
+    captures:
+      1: support.type.event.ue4
+      2: keyword.operator
+      3: storage.type
+      4: keyword.operator
+      5: storage.type
+      6: keyword.operator
+      7: storage.type
+      8: keyword.operator
+      9: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(END_DEFINE_SPEC)(\()\s*({{ident}})\s*(\))'
+    captures:
+      1: support.type.delegate.ue4
+      2: keyword.operator
+      3: storage.type
+      4: keyword.operator
+
+  - comment: 4th arg is function name
+    match: '\b(VARARG_DECL)\s*(\()'
+    captures:
+      1: support.type.vararg.ue4
+      2: keyword.operator
+    push:    
+    - match: ','
+      scope: keyword.operator
+      push:
+      - match: ','
+        scope: keyword.operator
+        push:
+        - match: ','
+          scope: keyword.operator
+          push:
+          - match: '{{ident}}'
+            scope: entity.name.type
+            push:
+            - match: '(\)\s*;)|$'
+              scope: keyword.operator
+              pop: true
+            - include: common
+          - match: '(?<=;|$)'
+            pop: true
+        - include: common
+        - match: '(?<=;|$)'
+          pop: true
+      - include: common
+      - match: '(?<=;|$)'
+        pop: true
+    - include: common
+    - match: '(?<=;|$)'
+      pop: true
+
+  - comment: "--- EOS unit tests (not dealing with string escape characters for now) ---"
+    match: '{{begin}}([A-Z_]+_TEST_CASE)\s*(\()\s*("[^"]+")\s*(,)\s*([A-Z_]+)'
+    captures:
+      1: support.type.test.ue4
+      2: keyword.operator
+      3: string.double-quote
+      4: keyword.operator
+      5: constant
+    push: function
+
+  - match: |-
+      (?x)    # pretty much any open parenthesis indicates a function definition/declaration (known issue: parses function pointers incorrectly)
+      {{begin}}(
+        (?:{{ident}}\s*+::\s*+)*
+        (?:
+          operator\s*(?:
+            \(\s*\)|[^(]+   # e.g. operator->*, operator new, operator X::T&, operator T<X>      (old version: {{operator}}+|{{cppident}}\s*[&*])
+          ) |
+          ~?{{ident}}
+        )
+      )\s*
+      (?: # 3    4   5
+        \s*(<)([^>]*)(>)\s*  # falls over on nested template specialisation arguments or multi-line declarations - oh well
+      )?(\()(?![&*])
+    captures:
+      1: entity.name.function
+      2: keyword.operator
+      3: storage.type
+      4: keyword.operator
+      5: keyword.operator
+    push: [function, function-args]
+
+  - match: '(template)\s*(<)'
+    captures:
+      1: storage.type
+      2: keyword.operator
+    push: template-args
+
+  # pre catch for variables
+  - match: '(?:({{ue4type}})|{{ident}})\s*(<)'
+    captures:
+      1: storage.type.ue4
+      2: keyword.operator
+    push: template-args
+
+    # only support two - only last thing in * gets coloured right anyway
+  - match: '({{ident}})\s*(?=,.*;|;)'
+    captures:
+      1: variable
+      2: keyword.operator
+      3: constant.numeric
+      4: keyword.operator
+
+  - match: 'typedef'
+    scope: storage.modifier
+    push:
+      - meta_scope: meta.typedef
+      - match: '({{ident}});'
+        captures:
+          1: entity.name.type
+          # 1: entity.name.typedef   doesn't show up in symbol find
+          2: keyword.operator
+        pop: true
+      - match: ';|(?<=})'
+        scope: keyword.operator
+        pop: true
+      - include: common
+
+# can't take precedence over class definition
+  - comment: "Function calls used in initialisers aren't function definitions"  
+    match: '({{ident}})\s*(?:(\[)\s*(.*)(\]))?\s*(=)'
+    captures:
+      1: variable
+      2: keyword.operator
+      3: constant.numeric
+      4: keyword.operator
+      5: keyword.operator
+
+    push:
+      - meta_scope: meta.initializer
+      - match: ';'
+        scope: keyword.operator
+        pop: true
+
+      - include: common
+      - include: function-block
+      - match: '(?<=})'
+        pop: true
+
+  - include: common
+
+  function:
+    - meta_scope: meta.function.c
+    - match: '(?<=});\s*'
+      scope: invalid.illegal.redundant-semicolon
+      pop: true
+    - match: ';|(?<=})'
+      scope: keyword.operator
+      pop: true
+    - include: common
+    - include: function-block
+
+  function-block:
+    - match: '{'
+      push:
+        - meta_scope: meta.block.c
+        - match: '}'
+          pop: true
+
+        - comment: '=== CASE EXPERIMENTAL ==='
+
+          match: |-
+            (?x)\b(case)
+              \s+(?:
+                ({{ident}})\s*(::)\s*
+              )*
+              ({{ident}})\s*(:)(?!:)
+          captures:
+            1: keyword.control
+            2: storage.type
+            3: keyword.operator
+            4: constant
+            5: keyword.operator
+
+        - comment: '--- LABEL EXPERIMENTAL ---'
+          match: '^\s*({{ident}})(?<!default)\s*(:)(?!\s*:)'
+          captures:
+            1: meta.preprocessor.c
+            2: keyword.operator
+
+        - include: function-block
+        - include: common
+
+  enum:
+    - meta_scope: meta.enum
+    - match: '(\s*{{ident}})?(;)'
+      captures:
+        1: variable
+        2: keyword.operator
+      pop: true
+    - match: '(?<=})\s*$'
+      scope: invalid.illegal.you-forgot-semicolon
+      pop: true
+    - include: enum-block
+    - include: common
+
+  enum-block:
+    - match: '{'
+      push:
+        - meta_scope: meta.enum-block
+        - match: '}'
+          pop: true
+        - comment: '--- UE4 ---'
+          match: (UMETA)(\()
+          captures:
+            1: support.type.ue4
+            2: keyword.operator
+          push: ue4-meta
+        - match: '{{ident}}'
+          scope: constant
+        - match: '{{operator}}'
+          scope: keyword.operator
+
+  function-args:
+    - meta_scope: meta.parens.c
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  template-args:
+    - meta_scope: meta.template-args
+    - match: <
+      scope: keyword.operator
+      push: template-args
+    - match: '([>;])|[{}]'  # semi-colon limits damage of missing or misparsed <
+      captures:
+        1: keyword.operator
+      pop: true
+    - include: common
+
+  ue4-meta:
+    - meta_scope: ue4-meta
+    - match: |-
+        (?ix)\b(
+          meta|(?:advanced|simple)display|atomic|immutable|
+          dependson|minimalapi|(?:not)?blueprint(?:able|type)|
+          blueprint(?:assignable|authorityonly|callable|cosmetic|implementableevent|pure|readonly|readwrite)|
+          config|const|(?:no)?export|globalconfig|instances|interp|localized|native|noclear|nontransactional|ref|
+          savegame|serializetext|(?:duplicate|non)?transient|
+          (?:not)?edit(?:anywhere|defaultsonly|fixedsize|inline(?:new)?|instanceonly)|
+          visible(?:anywhere|defaultsonly|instanceonly)|globaluserconfig|
+          category|client|customthunk|exec|netmulticast|(?:un)?reliable|server|rep(?:licated(?:using)?|retry)|
+          configdonotcheckdefaults|defaultconfig|ComponentWrapperClass|Experimental|EarlyAccessPreview|
+
+          # gameplay specifiers
+          (?:dont)?(?:auto)?(?:collapse|expand|show)categories|
+          abstract|advancedclassdisplay|classgroup|conversionroot|customconstructor|defaulttoinstanced|
+          (?:hide|show)(?:categories|dropdown|functions)|
+          intrinsic|perobjectconfig|(?:not)?placeable|within
+        )\b
+      scope: meta.preprocessor.c.ue4
+    - match: '\bdeprecated\b'
+      scope: constant.ue4
+    - match: '\('
+      scope: keyword.operator
+      push: ue4-meta
+    - match: '\)'
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  class-decl:
+  - match: '(?:^|(?<=>))\s*(friend\s*)?\b(class|struct|enum|(?:auto\s+)?concept)(?:\s+({{ident}}))\s*(<[^>]*>\s*)?(;)'
+    captures:
+      1: storage.modifier
+      2: storage.type
+      3: storage.type
+      4: keyword.operator
+      5: keyword.operator
+
+  common:
+    - match: \b(case|operator|using(?:\s+namespace)?)\b
+      scope: keyword.control
+
+    - match: \b(private|protected|public|virtual)\b
+      scope: storage.modifier
+
+    - match: |-
+        (?x)
+          (?:^|(?<=>))\s*\b
+            (class|struct|(?:auto\s+)?concept)
+            (\s+[A-Z_]+_API)?
+            (?:\s+({{ident}}
+              (?:::{{ident}})*
+              ))\s*(final\s*)?
+            (?=[:<{]|/(?:/|\*)|$)
+      captures:
+        1: storage.type
+        2: comment.dll-decl
+        3: entity.name.type.c++
+        4: storage.modified
+      push:
+        - meta_scope: meta.class-struct-block.c++
+        - match: '<'
+          scope: keyword.operator
+          push:
+            - meta_scope: specialisation-args
+            - match: '>'
+              scope: keyword.operator
+              pop: true
+            - include: common
+
+        - match: '(?<=\w|\s)(:)\s*((?:virtual\s+)?(?:{{access}})?)\s+({{cppident}})(?:\s*(,)\s*({{access}})?\s+({{cppident}}))*'
+          captures:
+            1: keyword.operator
+            2: storage.modifier
+            3: entity.other.inherited-class
+            4: storage.modifier
+            5: keyword.operator
+            6: storage.modifier
+            7: entity.other.inherited-class
+        - match: '(\s*{{ident}})?(?:(\().*(\)))?(;)'
+          captures:
+            1: variable
+            2: keyword.operator
+            3: keyword.operator
+            4: keyword.operator
+          pop: true
+        - match: '(?<=})\s*$'
+          scope: invalid.illegal.you-forgot-semicolon
+          pop: true
+
+        - include: $top_level_main
+
+    - comment: '--- UE4 ---'
+      match: \b(FORCEINLINE)\b
+      # scope: storage.modifier.ue4
+      scope: support.type.ue4
+
+    - comment: '--- UE4 (delegate) ---'
+      match: '(::)(Create(?:(?:Weak)?Lambda|(?:ThreadSafe)?SP|UObject|Static))\b'
+      captures:
+        1: keyword.operator
+        2: support.type.ue4
+
+    - match: \b(class|concept|enum|struct|typedef|union|asm|auto|bool|char|char16_t|char32_t|double|float|int|long|nullptr_t|ptrdiff_t|short|signed|size_t|template|unsigned|void|wchar_t)\b
+      scope: storage.type
+    - comment: '--- UE4 ---'
+      match: \b(int64|uint64|int32|uint32|int16|uint16|int8|uint8)
+      scope: storage.type.ue4
+    - match: \bthis\b
+      scope: variable.language.c++
+
+    - match: '\b[A-Z_]+_API\b'
+      scope: comment.dll-decl
+
+    - match: '\b[A-Z_][A-Z_]*_[A-Z0-9_]+\b'
+      scope: constant
+
+    - match: '\bNAME_None\b'
+      scope: constant.ue4
+
+    - match: '__underlying_type\s*\([^)]+\)'
+      scope: meta.preprocessor.c
+
+    - match: '{{begin}}({{ident}})(?:\s*(<)([^>]*)(>)\s*)?(\()'
+      captures:
+        1: support.function
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator # close angle bracket
+        5: keyword.operator # open paren
+
+    - match: '(?<=[\w)]->){{ident}}(?<!template|operator)\b(?!\()'
+      scope: variable
+
+    - match: '(?<=[\w)]\.){{ident}}(?<!template|operator)\b(?!\()'
+      scope: variable
+
+    - match: '{{operator}}'
+      scope: keyword.operator
+
+    - match: '^\s*(#\s*define)\s+({{ident}})'
+      captures:
+        1: keyword.control.import.define
+        2: entity.name.function.preprocessor
+      push:
+        - meta_scope: preprocessor.definition
+        - match: '\\\s*\n'
+          scope: keyword.operator
+        - match: '\n'
+          pop: true
+        - include: common
+
+
+    - match: '#(#|\s*\n)'
+      scope: meta.preprocessor.c
+
+    - match: '^\s*(#)\s*(include)\b'
+      captures:
+        2: keyword.control.import
+      push:
+        - meta_scope: meta.preprocessor.c
+        - match: '<'
+          push:
+            - meta_scope: string
+            - match: '[>\n]'
+              pop: true
+        - match: (?<=\n)
+          pop: true
+
+    - match: '^\s*(#)\s*(\w+)'
+      captures:
+        2: keyword.control.import
+      push:
+        - meta_scope: meta.preprocessor.c
+
+        - comment: Override UE4 type highlighting
+          match: '[A-Z0-9_]+'
+
+        - include: common
+        - match: $
+          pop: true
+
+    - include: ue4-experimental
+
+  ue4-experimental:
+    # --- UE4-specific ---
+  - match: '(::)(Create(?:Lambda|SP|UObject))'
+    captures:
+      1: keyword.operator
+      2: storage.type.ue4
+  - match: '\b(E[A-Z][A-Za-z0-9_]+)(::)({{ident}})(?<!Type)\b'
+    captures:
+      1: storage.type.ue4
+      2: keyword.operator
+      3: support.constant.ue4
+
+  - match: '{{ue4type}}'
+    scope: storage.type.ue4
+
+  - match: 'ROLE_(None|(Simulated|Autonomous)Proxy|Authority)'
+    scope: support.constant.ue4
+

@@ -1,0 +1,11 @@
+{
+	"theme": "Default Dark.sublime-theme",
+	"color_scheme": "Packages/Twilight+/Twilight+.tmTheme",
+	"ignored_packages":
+	[
+		"Vintage",
+	],
+	"font_size": 13,
+	"find_selected_text": true,
+	"draw_white_space": "all",
+}

@@ -1,0 +1,379 @@
+%YAML 1.2
+---
+name: TypeScript (wip)
+
+scope: source.typescript
+extensions: ["ts"]
+variables:
+  ident: '[A-Za-z_$]+[A-Za-z_0-9]*'
+  hex_digit: '[0-9a-fA-F]'
+  operator: '[\-\[\]+/*<>.^&|%!=~:,()?;]'
+  begin: '(?<=\s|^|{{operator}}|[{}])' # tried to put \s* on the front to fix int x(3); init
+  end: '(?=\s|$|{{operator}}|[{}])'
+contexts:
+  prototype:
+    - match: //
+      push:
+      - meta_scope: comment
+      - match: '(?i)@?todo'
+        scope: meta.preprocessor.c.ue4
+      - match: '$|\n'
+        pop: true
+
+    - match: /\*\*/
+      scope: comment
+
+    - match: /\*\*(?!/)
+      scope: comment
+      push:
+      - meta_scope: meta.preprocessor.c
+      - match: '(?i)@?todo'
+        scope: support.type.ue4
+      - match: '^\s*(\*)\s*(?!/)(@{{ident}})?'
+        captures:
+          1: comment
+          2: support.type.ue4
+      - match: \*/
+        scope: comment
+        pop: true
+
+    - match: /\*
+      push:
+      - meta_scope: comment
+      - match: '(?i)@?todo'
+        scope: meta.preprocessor.c.ue4
+      - match: \*/
+        pop: true
+
+    - match: '"'
+      scope: punctuation.definition.string.begin
+      push:
+        - meta_scope: string.double-quote
+        - match: '\\[\\"bnr]'
+          scope: constant.character.escape
+        - match: '"'
+          pop: true
+
+    - match: ''''
+      push:
+        - meta_scope: string.single-quote
+        - match: '\\[\\''bnr]'
+          scope: constant.character.escape
+        - match: ''''
+          pop: true
+
+    - match: '`'
+      scope: punctuation.definition.string.template.begin.js
+      push:
+        - meta_include_prototype: false
+        - meta_scope: string.template.js
+        - match: '`'
+          scope: punctuation.definition.string.template.end.js
+          pop: true
+        - match: '\$\{'
+          scope: punctuation.definition.template-expression.begin.js
+          push:
+            - clear_scopes: 1
+            - meta_scope: meta.template.expression.js
+            - meta_content_scope: source.js.embedded.expression
+            - match: '\}'
+              scope: punctuation.definition.template-expression.end.js
+              pop: true
+            - include: common
+        - include: string-content
+
+    - match: '(?<![a-zA-Z_0-9\s])\s*/(?![/*])(?=.*/)'
+      scope: punctuation.definition.string.begin
+      push:
+      - meta_scope: string.regexp
+      - match: '\\[\\bnr/|()*+?]'
+        scope: constant.character.escape
+      - match: '\\[dDsSwW]'
+        scope: constant.character
+      - match: '(?<!\\)/'
+        pop: true
+
+    - match: '(?<!\.)\.{3}(?!\.)'
+      scope: storage.type
+
+    - match: '{{begin}}-?(\.\d+|\d+\.?\d*)([Ee]\d+)?[Uu]?[FfLl]?{{end}}'
+      scope: constant.numeric.c
+    - match: '{{begin}}-?0[xX]({{hex_digit}}+\.?{{hex_digit}}*|\.{{hex_digit}}+)([Pp]\d+)?[Uu]?[FfLl]*{{end}}'
+      scope: constant.numeric.c
+
+    - match: '(\s*|\.)({{ident}}\$)'
+      captures:
+        1: keyword.operator
+        2: support.type
+      scope: support.type
+
+  string-content:
+    - match: \\\s*\n
+      scope: constant.character.escape.newline.js
+    - match: '\\(x[\da-fA-F][\da-fA-F]|u[\da-fA-F][\da-fA-F][\da-fA-F][\da-fA-F]|.)'
+      scope: constant.character.escape.js
+
+  main:
+
+    - match: '\s*(@{{ident}}(?:\.{{ident}})*)\s*(\()'
+      captures:
+        1: support.type.decorator
+        2: keyword.operator
+      push: decorator
+
+    - match: '(?:^|(?<=export|declare))\s*(enum)(\s+{{ident}})'
+      captures:
+        1: storage.type
+        2: entity.name.type.js
+      push: enum
+
+    - match: '(?:^|(?<=export|declare))\s*(type)\s+({{ident}})\s*(=)'
+      captures:
+        1: storage.type
+        2: entity.name.type.js
+        3: keyword.operator
+
+    - comment: "todo: generics"
+      match: '(?:^|(?<=export|declare))\s*(abstract\s+)?(class|@?interface)\s+({{ident}})'
+      captures:
+        1: storage.type
+        2: storage.type
+        3: entity.name.type.js
+      push:
+        - meta_scope: meta.class-struct-block.js
+        - match: '<'
+          scope: keyword.operator
+          push:
+            - meta_scope: specialisation-args
+            - match: '>'
+              scope: keyword.operator
+              pop: true
+            - include: common
+        - match: '\b(extends|implements)\s+(?:({{ident}})(\.))*({{ident}})'
+          captures:
+            1: keyword.operator
+            2: entity.other.inherited-class
+            3: keyword.operator
+            4: entity.other.inherited-class
+        - match: '(\s*{{ident}})?(;)\s*'
+          scope: invalid.illegal.redundant-semicolon
+          captures:
+            1: variable
+            2: keyword.operator
+          pop: true
+        - match: '(?<=})\s*$'
+          pop: true
+
+        - include: $top_level_main
+
+    - match: '{'
+      push:
+        - meta_scope: meta.block.js
+        - match: '}'
+          pop: true
+        - include: $top_level_main
+
+    - include: function-decl
+
+    - include: common
+
+  function-decl:
+    - match: |-
+        (?x)    # pretty much any open parenthesis indicates a function definition/declaration
+        {{begin}}(
+          {{ident}}
+        )\s*
+        (?: # 3    4   5
+          \s*(<)([^>]*)(>)\s*
+        )?(\()(?![&*])
+      captures:
+        1: entity.name.function
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator
+        5: keyword.operator
+      push: [function, function-args]
+
+
+  function:
+    - meta_scope: meta.function.c
+    - match: '(?<=});\s*'
+      scope: invalid.illegal.redundant-semicolon
+      pop: true
+    - match: ';|(?<=})'
+      scope: keyword.operator
+      pop: true
+    - include: common
+    - include: function-block
+
+  function-block:
+  - match: '{'
+    push:
+    - meta_scope: meta.block.js.in-function
+    - match: '}'
+      pop: true
+
+    - match: 'default:'
+      scope: keyword.control
+
+    - include: function-block
+    - include: common
+
+  enum:
+    - meta_scope: meta.enum
+    - match: '(?<=})'
+      pop: true
+    - include: enum-block
+    - include: common
+
+  enum-block:
+    - match: '{'
+      push:
+        - meta_scope: meta.enum-block
+        - match: '{'
+          push:
+          - include: $top_level_main
+          - match: '}'
+            pop: true
+
+        - match: '(?:})|(;)'
+          captures: { 1: keyword.operator }
+          pop: true
+        - match: '{{ident}}'
+          scope: constant
+        - match: '{{operator}}'
+          scope: keyword.operator
+
+  function-args:
+    - meta_scope: meta.parens.c
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  template-args:
+    - meta_scope: meta.template-args
+    - match: <
+      scope: keyword.operator
+      push: template-args
+    - match: '([>;])|[{}]'  # semi-colon limits damage of missing or misparsed <
+      captures:
+        1: keyword.operator
+      pop: true
+    - include: common
+
+  decorator:
+    - meta_scope: meta.decorator
+    - match: '\('
+      scope: keyword.operator
+      push: decorator
+    - match: '\)'
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+
+  common:
+    - match: \b(true|false|null|undefined|NaN|default)\b
+      scope: constant.language
+    - match: (?<!\.)\b(extends|implements|instanceof|throws|typeof)\b
+      scope: keyword.operator
+    - match: (?<!\.)\b(as|async|await|get|set|break|case|catch|continue|do|else|finally|for|goto|if|in|new|delete|of|return|switch|throw|try|while|yield)\b
+      scope: keyword.control
+    - match: (?<!\.)\b(extern|final|private|protected|public|static|abstract)\b
+      scope: storage.modifier
+
+    - match: \b(declare|class|interface|function|any|unknown|boolean|number|string|void|type|const|readonly|let|var)\b
+      scope: storage.type
+    - match: \b(this|super)\b
+      scope: variable.language.js
+
+    - match: '\b[A-Z0-9_]+\b'
+      scope: constant
+
+    - match: |-
+        (?x)
+        (?<=\s|^|{{operator}})({{ident}})
+          (?:
+          \s*(<)([^>]*)(>)\s*
+         )?(\()
+      captures:
+        1: support.function
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator # close angle bracket
+        5: keyword.operator # open paren
+
+    - match: '(?<=[\w)]\.)([a-z_$][A-Za-z_0-9]*)(?!\()'
+      scope: variable
+
+    - match: '{{operator}}'
+      scope: keyword.operator
+
+    - match: '^\s*(export)\s*({)\s*\b'
+      captures:
+        1: keyword.control.export
+        2: keyword.control.operator
+      push:
+        - meta_scope: meta.preprocessor.c
+        - match: /\*
+          push:
+            - meta_scope: comment
+            - match: \*/
+              pop: true
+        - match: '[{}]'
+          scope: keyword.operator
+        - match: ;
+          scope: keyword.operator
+          pop: true
+        - match: \n
+          pop: true
+
+    - match: \b(export|declare)\b
+      scope: keyword.control.import
+
+    - match: '^\s*import\b'
+      scope: keyword.control.import
+      push:
+        - meta_scope: meta.preprocessor.c
+        - match: /\*
+          push:
+            - meta_scope: comment
+            - match: \*/
+              pop: true
+
+        - match: '"'
+          scope: punctuation.definition.string.begin
+          push:
+            - meta_scope: string.double-quote
+            - match: '\\[\\"bnr]'
+              scope: constant.character.escape
+            - match: '"'
+              pop: true
+
+        - match: ''''
+          push:
+            - meta_scope: string.single-quote
+            - match: '\\[\\''bnr]'
+              scope: constant.character.escape
+            - match: ''''
+              pop: true
+
+        - match: from|as|[{}]
+          scope: keyword.operator
+        - match: \*
+          scope: storage.type
+        - match: ;
+          scope: keyword.operator
+          pop: true
+        - match: \n
+          pop: true
+
+    - match: '@{{ident}}'
+      scope: support.type.decorator
+
+    - match: '\b[A-Z][A-Za-z_0-9]+'
+      scope: storage.type.js
+
+    - match: '(?<![A-Za-z_0-9])\$\$[A-Za-z_0-9]*'
+      scope: storage.type.js

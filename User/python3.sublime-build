@@ -1,0 +1,13 @@
+{
+	"cmd": ["mypy --strict '$file' && python3 -u '$file'"],
+	"file_regex": "^(?:\\s*File \")?([^:\"]+)(?::|\", line )([0-9]+)",
+
+	"selector": "source.python",
+	"syntax": "Packages/ANSIescape/ANSI.sublime-syntax",
+	"target": "ansi_color_build",
+	"shell": true,
+	// "env": {
+	// 	"FORCE_COLOR": "1",
+	// 	"MYPY_FORCE_COLOR": "1" },
+	// "quiet": true
+}

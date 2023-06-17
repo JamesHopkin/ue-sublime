@@ -1,0 +1,93 @@
+%YAML 1.2
+---
+name: Log file
+
+scope: source.log
+extensions: ["log"]
+variables:
+    hex: '[0-9a-fA-F]'
+contexts:
+    prototype:
+    -   match: '"[^"]*"'
+        scope: string
+
+    -   match: '''[^'']*'''
+        scope: string
+
+    -   match: '(?<=[\s=\(])([a-zA-Z]:|..)?(https?:/)?([/\\](:\d+|[-+._?=&\w])+)+/?'
+        scope: string
+
+    -   match: '\babc'
+        scope: constant.numeric
+
+    -   match: '\b0x{{hex}}+\b'
+        scope: constant.numeric
+
+    -   match: '\b{{hex}}{32}\b'
+        scope: constant.numeric
+
+    -   match: '\b(true|false)\b'
+        scope: constant.boolean
+
+    -   match: '\b{{hex}}{8}-{{hex}}{4}-{{hex}}{4}-{{hex}}{4}-{{hex}}{12}\b'
+        scope: support.function
+
+    main:
+    -   match: '(Log\w+|(?:Very)?Verbose|Display)(:)'
+        captures:
+            1: variable
+            2: keyword.operator
+
+    -   match: '(Warning)(:)'
+        captures:
+            1: support.function
+            2: keyword.operator
+
+    -   match: '(Error)(:)'
+        captures:
+            1: constant
+            2: keyword.operator
+
+    -   match: '\d?\d (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) \d\d:\d\d:\d\d'
+        scope: meta.preprocessor.c
+
+    -   match: '^(\d+/\d+/\d+ )(\d+)(:)(\d+)(:)(\d+)(\.\d+)'
+        scope: meta.preprocessor.c
+        captures:
+            1: comment
+            2: numeric
+            3: operator
+            4: numeric
+            5: operator
+            6: numeric
+            7: comment
+
+    -   match: '\b-?\d[\d.]*'
+        scope: constant.numeric
+
+    -   match: '[():]|->'
+        scope: keyword.operator
+
+    -   match: '\b(\w+)(::)(\w+)\b'
+        captures:
+            1: storage.type
+            2: keyword.operator
+            3: storage.type
+
+    -   match: '(\()(\d{3})(\))'
+        captures:
+            1: keyword.operator
+            2: constant.numeric
+            3: keyword.operator
+
+    -   match: '^(\[\d\d\d\d\.\d\d\.\d\d-)(\d\d)(\.)(\d\d)(\.)(\d\d)(:\d+\]\[[\d\s]+\])'
+        scope: meta.preprocessor.c
+        captures:
+            1: comment
+            2: numeric
+            3: operator
+            4: numeric
+            5: operator
+            6: numeric
+            7: comment
+

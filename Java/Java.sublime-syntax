@@ -1,0 +1,310 @@
+%YAML 1.2
+---
+name: Java (wip)
+
+scope: source.java
+extensions: ["java"]
+variables:
+  ident: '[A-Za-z_][A-Za-z_0-9]*'
+  hex_digit: '[0-9a-fA-F]'
+  operator: '[\-\[\]+/*<>.^&|%!=~:,()?;]'
+  begin: '(?<=\s|^|{{operator}}|[{}])' # tried to put \s* on the front to fix int x(3); init
+  end: '(?=\s|$|{{operator}}|[{}])'
+contexts:
+  prototype:
+    - match: //
+      push:
+      - meta_scope: comment
+      - match: '(?i)@?todo'
+        scope: meta.preprocessor.c.ue4
+      - match: '$|\n'
+        pop: true
+
+    - match: /\*\*(?!/)
+      scope: comment
+      push:
+      - meta_scope: meta.preprocessor.c
+      - match: '(?i)@?todo'
+        scope: support.type.ue4
+      - match: '^\s*(\*)\s*(?!/)(@{{ident}})?'
+        captures:
+          1: comment
+          2: support.type.ue4
+      - match: \*/
+        scope: comment
+        pop: true
+
+    - match: /\*
+      push:
+      - meta_scope: comment
+      - match: '(?i)@?todo'
+        scope: meta.preprocessor.c.ue4
+      - match: \*/
+        pop: true
+
+    - match: '(L?)"'
+      scope: punctuation.definition.string.begin
+      push:
+        - meta_scope: string.double-quote
+        - match: '\\[\\"bnr]'
+          scope: constant.character.escape
+        - match: '"'
+          pop: true
+    - match: '(L?)'''
+      push:
+        - meta_scope: string.single-quote
+        - match: '\\[\\''bnr]'
+          scope: constant.character.escape
+        - match: ''''
+          pop: true
+
+    - match: '(?<!\.)\.{3}(?!\.)'
+      scope: storage.type
+
+    - match: '{{begin}}-?(\.\d+|\d+\.?\d*)([Ee]\d+)?[Uu]?[FfLl]?{{end}}'
+      scope: constant.numeric.c
+    - match: '{{begin}}-?0[xX]({{hex_digit}}+\.?{{hex_digit}}*|\.{{hex_digit}}+)([Pp]\d+)?[Uu]?[FfLl]*{{end}}'
+      scope: constant.numeric.c
+
+  main:
+    - match: '\s*(@{{ident}}(?:\.{{ident}})*)\s*(\()'
+      captures:
+        1: support.type.decorator
+        2: keyword.operator
+      push: decorator
+
+    - match: '(?:^|(?<=public|private|static))\s*(enum)(\s+{{ident}})'
+      captures:
+        1: storage.type
+        2: entity.name.type.java
+      push: enum
+
+    - comment: "todo: generics"
+      match: '(?:^|(?<=public|private|static|abstract|final))\s*(class|@?interface)\s+({{ident}})'
+      captures:
+        1: storage.type
+        2: entity.name.type.java
+      push:
+        - meta_scope: meta.class-struct-block.java
+        - match: '<'
+          scope: keyword.operator
+          push:
+            - meta_scope: specialisation-args
+            - match: '>'
+              scope: keyword.operator
+              pop: true
+            - include: common
+        - match: '\b(extends|implements)\s+(?:({{ident}})(\.))*({{ident}})'
+          captures:
+            1: keyword.operator
+            2: entity.other.inherited-class
+            3: keyword.operator
+            4: entity.other.inherited-class
+        - match: '(\s*{{ident}})?(;)\s*'
+          scope: invalid.illegal.redundant-semicolon
+          captures:
+            1: variable
+            2: keyword.operator
+          pop: true
+        - match: '(?<=})\s*$'
+          pop: true
+
+        - include: $top_level_main
+
+    - match: '{'
+      push:
+        - meta_scope: meta.block.java
+        - match: '}'
+          pop: true
+        - include: $top_level_main
+
+    - include: function-decl
+
+    - comment: "Function calls used in initialisers aren't function definitions"  
+      match: '({{ident}})\s*(=)'
+      captures:
+        1: variable
+        2: keyword.operator
+      push:
+        - meta_scope: meta.initializer
+        - match: ';'
+          scope: keyword.operator
+          pop: true
+
+        - include: common
+        - include: function-block
+        - match: '(?<=})'
+          pop: true
+
+    - include: common
+
+      # only support two - only last thing in * gets coloured right anyway
+    - match: '({{ident}})\s*(?:(\[)\s*(.*)(\]))?(?=[,;])'
+      captures:
+        1: variable
+        2: keyword.operator
+        3: constant.numeric
+        4: keyword.operator
+
+  function-decl:
+    - match: |-
+        (?x)    # pretty much any open parenthesis indicates a function definition/declaration (known issue: parses function pointers incorrectly)
+        {{begin}}(
+          {{ident}}
+        )\s*
+        (?: # 3    4   5
+          \s*(<)([^>]*)(>)\s*  # falls over on nested template specialisation arguments or multi-line declarations - oh well
+        )?(\()(?![&*])
+      captures:
+        1: entity.name.function
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator
+        5: keyword.operator
+      push: [function, function-args]
+
+
+
+  function:
+    - meta_scope: meta.function.c
+    - match: '(?<=});\s*'
+      scope: invalid.illegal.redundant-semicolon
+      pop: true
+    - match: ';|(?<=})'
+      scope: keyword.operator
+      pop: true
+    - include: common
+    - include: function-block
+
+  function-block:
+  - match: '{'
+    push:
+    - meta_scope: meta.block.java.in-function
+    - match: '}'
+      pop: true
+
+    - match: 'default:'
+      scope: keyword.control
+
+    - include: function-block
+    - include: common
+
+  enum:
+    - meta_scope: meta.enum
+    - match: '(?<=})'
+      pop: true
+    - include: enum-block
+    - include: common
+
+  enum-block:
+    - match: '{'
+      push:
+        - meta_scope: meta.enum-block
+        - match: '{'
+          push:
+          - include: $top_level_main
+          - match: '}'
+            pop: true
+
+        - match: '(?:})|(;)'
+          captures: { 1: keyword.operator }
+          pop: true
+        - match: '{{ident}}'
+          scope: constant
+        - match: '{{operator}}'
+          scope: keyword.operator
+
+  function-args:
+    - meta_scope: meta.parens.c
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  template-args:
+    - meta_scope: meta.template-args
+    - match: <
+      scope: keyword.operator
+      push: template-args
+    - match: '([>;])|[{}]'  # semi-colon limits damage of missing or misparsed <
+      captures:
+        1: keyword.operator
+      pop: true
+    - include: common
+
+  decorator:
+    - meta_scope: meta.decorator
+    - match: '\('
+      scope: keyword.operator
+      push: decorator
+    - match: '\)'
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+
+  common:
+    - match: \b(true|false|null)\b
+      scope: constant.language
+    - match: \b(extends|implements|instanceof|throws)\b
+      scope: keyword.operator
+    - match: \b(break|case|catch|continue|do|else|finally|for|goto|if|new|return|switch|throw|try|while)\b
+      scope: keyword.control
+    - match: \b(extern|final|private|protected|public|static|abstract)\b
+      scope: storage.modifier
+
+    - match: \b(class|interface|enum|boolean|byte|char|double|float|int|long|short|void)\b
+      scope: storage.type
+    - match: \b(this|super)\b
+      scope: variable.language.java
+
+    - match: '\b[A-Z0-9_]+\b'
+      scope: constant
+
+    - match: |-
+        (?x)
+        (?<=\s|^|{{operator}})({{ident}})
+          (?:
+          \s*(<)([^>]*)(>)\s*
+         )?(\()
+      captures:
+        1: support.function
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator # close angle bracket
+        5: keyword.operator # open paren
+
+    - match: '(?<=[\w)]\.)([a-z_][A-Za-z_0-9]*)(?!\()'
+      scope: variable
+
+    - match: '{{operator}}'
+      scope: keyword.operator
+
+    - match: '#(#|\s*\n)'
+      scope: meta.preprocessor.c
+
+    - match: '^\s*import\b'
+      scope: keyword.control.import
+      push:
+        - meta_scope: storage.modifier.import.java
+        - match: ;
+          scope: keyword.operator
+          pop: true
+        - match: \n
+          pop: true
+
+    - match: '^\s*package\b'
+      scope: keyword.control.package
+      push:
+        - meta_scope: entity.type.package.java
+        - match: ;
+          scope: keyword.operator
+          pop: true
+        - match: \n
+          pop: true
+
+    - match: '@{{ident}}'
+      scope: support.type.decorator
+
+    - match: '\b[A-Z][A-Za-z_0-9]+'
+      scope: storage.type.java
