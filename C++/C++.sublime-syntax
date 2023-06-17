@@ -383,6 +383,28 @@ contexts:
       pop: true
     - include: common
 
+  - match: '(UE_DECLARE_GAMEPLAY_TAG_EXTERN)(\()\s*({{ident}})'
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
+      3: storage.type
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
+  - match: '(UE_DEFINE_GAMEPLAY_TAG(?:_STATIC|_COMMENT)?)(\()\s*({{ident}})'
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
+      3: entity.name.type.c++
+    push:
+    - match: \)
+      scope: keyword.operator
+      pop: true
+    - include: common
+
   - match: '(BEGIN_DEFINE_SPEC)(\()\s*({{ident}})'
     captures:
       1: support.type.delegate.ue4

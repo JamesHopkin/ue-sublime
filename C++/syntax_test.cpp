@@ -647,6 +647,31 @@ DEFINE_LATENT_AUTOMATION_COMMAND_SomeMoreStuff(FCommand, FType, Name)
 
 DEFINE_LATENT_AUTOMATION_COMMAND_TWO_PARAMETER(FDeltaSave_TestDeltasCheckedOut, TSharedRef<FDeltaFileTestStorage>, Storage, TArray<FPackagePath>, Expected);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Boo)
+//  ^ support.type.ue4
+//                            ^ keyword.operator
+//                             ^^^ storage.type
+//                                ^ keyword.operator
+
+UE_DEFINE_GAMEPLAY_TAG(Foo, "Tag.Name");
+//  ^ support.type.ue4
+//                    ^ keyword.operator
+//                     ^^^ entity.name.type
+//                          ^^^ string
+//                                    ^ keyword.operator
+
+
+UE_DEFINE_GAMEPLAY_TAG_STATIC(Foo, "Tag.Name");
+//  ^ support.type.ue4
+//                           ^ keyword.operator
+//                            ^^^ entity.name.type
+//                                 ^^^ string
+//                                           ^ keyword.operator
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Woo, "Tag.Name", "comment");
+//  ^ support.type.ue4
+
+
 junk struct X {};
 //          ^ -entity
 
