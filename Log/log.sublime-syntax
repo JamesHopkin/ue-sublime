@@ -6,6 +6,7 @@ scope: source.log
 extensions: ["log"]
 variables:
     hex: '[0-9a-fA-F]'
+    operator: '[\-\[\]+/*<>.^&|%!=~:,()?;]'
 contexts:
     prototype:
     -   match: '"[^"]*"'
@@ -62,7 +63,7 @@ contexts:
             6: numeric
             7: comment
 
-    -   match: '\b-?\d[\d.]*'
+    -   match: '(?<!\w)-?\d[0-9.a-fA-F]*'
         scope: constant.numeric
 
     -   match: '[():]|->'
@@ -91,3 +92,5 @@ contexts:
             6: numeric
             7: comment
 
+    - match: '{{operator}}'
+      scope: keyword.operator

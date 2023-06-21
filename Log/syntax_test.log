@@ -18,7 +18,7 @@
 also "double" quotes
 //   ^^^^^^^^ string
 
-2023/02/09 14:22:49.913 LogWoo: Warning: contains 1234.23 (decimal)
+2023/02/09 14:22:49.913 LogWoo: Warning: contains -1234.23 (decimal)
 // <- meta.preprocessor.c comment
 //         ^^ meta.preprocessor.c numeric
 //           ^ meta.preprocessor.c operator
@@ -30,8 +30,11 @@ also "double" quotes
 //                            ^ keyword.operator
 //                              ^^^^^^^ support.function
 //                                     ^ keyword.operator
-//                                                ^^^^ constant.numeric
+//                                                ^^^^^^^ constant.numeric
 
+UE5
+  // <- -constants.numeric
+  
 LogWoo: Error: hex 0x12ab starting with 0x
 // <- variable
 //    ^ keyword.operator
@@ -96,4 +99,3 @@ also  /a/b/c  root paths but not =0/3
 support c:/blah and ../blah too
 //      ^^^^^^^ string
 //                  ^^^^^^^ string
-
