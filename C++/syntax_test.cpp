@@ -80,10 +80,6 @@ void Class::operator!<abc>()
 
 }
 
-auto concept LessThanComparable<typename T> {
-    bool operator=(T, T);
-}
-
 class BLAH_API Class<int>
 //    ^^^^^^^^ -entity.name.type
 //             ^^^^^ entity.name.type
@@ -359,7 +355,7 @@ enum class Enum : int32
 //    ^ storage.type
 //         ^^^^ entity.name.type
 //              ^ keyword.operator
-//                 ^ storage.type.ue4
+//                ^^^^^ entity.other.inherited-class
 {
     Holy, Cow
 //   ^ constant
@@ -367,6 +363,13 @@ enum class Enum : int32
 //         ^ constant
 }
  // <-      invalid.illegal
+
+enum class Enum : Blah;
+//         ^^^^ storage.type
+//                ^^^^ entity.other.inherited-class
+
+enum class Enum::Woo;
+
 
 
 namespace nmspc trail
@@ -383,11 +386,14 @@ namespace
 
 };
 
+// ^ -meta.block
+
 
 UCLASS(BlueprintType, Blah="hello")
 //  <- support.type.ue4
 //                         ^^^^^^^ string
 class UHomeBaseWorkers : public UObject
+//                              ^^^^^^^ entity.other.inherited-class
 {
     GENERATED_BODY()
 //  ^^^^^^^^^^^^^^ support.type.ue4
@@ -403,9 +409,19 @@ class UHomeBaseWorkers : public UObject
 //         ^^^^ variable
 //             ^ keyword.operator
 
-    SSlate<int> UCaps;
+    typedef char Wibble;
+//               ^^^^^^ entity.name.type
+
+    // why is rhs a variable? should fix
+    using Boo = int32;
+//  ^^^^^ keyword.control
+//        ^^^ entity.name.type
 
     typedef char (*X)();
+//               ^^ keyword.operator
+//                  ^^^^ keyword.operator
+
+
     friend char X;
 }
  // <-      invalid.illegal
@@ -431,25 +447,6 @@ class C : public X::template T<nullptr_t>::type {}
 //        ^^^^^^ storage.modifier
 //    ^ 
 
-enum class Enum : int32
-// <- storage.type
-//    ^ storage.type
-//              ^ keyword.operator
-//                 ^ storage.type.ue4
-{
-    Holy, Cow
-//   ^ constant
-//      ^ keyword.operator
-//         ^ constant
-}
- // <-      invalid.illegal
-
-enum class Enum : Blah;
-//         ^^^^ storage.type
-//                ^^^^ entity.other.inherited-class
-
-enum class Enum::Woo;
-
 
 namespace nmspc trail
 //        ^^^^^ entity.name.type.namespace
@@ -460,12 +457,7 @@ namespace nmspc trail
 };
  // <-      invalid.illegal
 
-namespace
-{
 
-};
-
-// ^ -meta.block
 
 class X
 {
@@ -477,39 +469,12 @@ class X
 //      ^^^^ variable
 //          ^ keyword.operator
 
-UCLASS(BlueprintType, Blah="hello")
-//                         ^^^^^^^ string
-class UHomeBaseWorkers : public UObject
-//                              ^^^^^^^ entity.other.inherited-class
-{
-    GENERATED_BODY()
-//  ^^^^^^^^^^^^^^ support.type.ue4
-
-    UFUNCTION(BlueprintCallable)
-    virtual void CallMeMaybe() override;
-
-    UPROPERTY(BlueprintReadWrite)
-    int32* Blah;
-//  ^^^^^ storage.type.ue4
-//       ^ keyword.operator
-//         ^^^^ variable
-//             ^ keyword.operator
-
-    typedef char Wibble;
-//               ^^^^^^ entity.name.type
-
-    typedef char (*X)();
-//               ^^ keyword.operator
-//                  ^^^^ keyword.operator
-    friend char X;
-}
- // <-      invalid.illegal
-
 
 UCLASS(blah, meta=(hello))
 //                ^ ue4-meta ue4-meta keyword.operator
 
 
+// what is this about?
 void wibble = { f();
 //   ^^^^^^ variable
 //          ^ keyword.operator
