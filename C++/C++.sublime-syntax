@@ -249,9 +249,9 @@ contexts:
   - include: class-decl
 
   - match: |-
-      (?x)
-        (enum(?:\s+class)?)\s+
-        ({{ident}})
+      {{begin}}(?x)
+        (enum(?:\s+class)?)\b
+        (\s+{{ident}})?
         (?:\s*(:)\s*({{ident}}))?
         \s*(;)
     captures:
@@ -261,10 +261,17 @@ contexts:
       4: entity.other.inherited-class
       5: keyword.operator
 
-  - match: '{{begin}}(enum(?:\s+class)?)\b(\s+{{ident}}\b)?'
+  - match: |-
+      {{begin}}(?x)
+        (enum(?:\s+class)?)\b
+        (\s+{{ident}})?
+        (?:\s*(:)\s*({{ident}}))?
     captures:
       1: storage.type
       2: entity.name.type.c++
+      3: keyword.operator
+      4: entity.other.inherited-class
+      5: keyword.operator
     push: enum
 
   - match: '{'
