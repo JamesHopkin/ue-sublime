@@ -206,6 +206,25 @@ label:
 Class::~Class();
 //     ^ entity
 
+class Class;
+// <- storage.type
+ // <- storage.type
+//^^^ storage.type
+//    ^^^^^ storage.type
+//         ^ keyword.operator
+
+template <class> class Class;
+// <- storage.type
+ // <- storage.type
+//^^^^^^ storage.type
+//       ^ keyword.operator
+//        ^^^^^ storage.type
+//             ^ keyword.operator
+//               ^^^^^ storage.type
+//                     ^^^^^ storage.type
+//                          ^ keyword.operator
+
+
 class Blah : public X<blah>
 {
 
@@ -263,12 +282,36 @@ namespace
 //  ^ comment
 //          ^ -string
 
-auto concept LessThanComparable<typename T> {
+concept Anything = true;
 // <- storage.type
-//   ^^^^^^^ storage.type
-    bool operator=(T, T);
-}
- // <-      invalid.illegal
+ // <- storage.type
+//^^^^^ storage.type
+//      ^^^^^^^^ entity.name.concept
+
+
+// will need a concept context to match = being on the next line
+// can then look for { and at least make it like a function scope (no defs inside)
+
+template <class X>
+concept C = requires(X x)
+// <- storage.type
+ // <- storage.type
+//^^^^^ storage.type
+//      ^ entity.name.concept
+//        ^ keyword.operator
+//          ^^^^^^^^ keyword.control
+//                  ^ keyword.operator
+
+{
+    { std::visit(TakesBlah{}, std::declval<C>()) } -> Anything;
+
+
+};
+
+// for now, at least make sure this doesn't start a meta block!
+
+// ^ -meta.block
+
 
 class BLAH_API Class
 //    ^^^^^^^^ -entity.name.type
@@ -350,6 +393,7 @@ class C : public X::template T<nullptr_t>::type {}
 //        ^^^^^^ storage.modifier
 //    ^ 
 
+
 enum class Enum : int32
 // <- storage.type
 //    ^ storage.type
@@ -385,6 +429,8 @@ namespace
 {
 
 };
+
+
 
 // ^ -meta.block
 
@@ -680,4 +726,16 @@ void f<vector<int>>();
 more blah
 #endif
 
+// hack so std templates are known to be types?, then fallback for std::
+std::vector<int> v;
+// <- storage.type
+ // <- storage.type
+//^ storage.type
+//   ^^^^^^ storage.type
+//          ^^^ storage.type
+
+void f()
+{
+    std::invoke(f);
+}
 

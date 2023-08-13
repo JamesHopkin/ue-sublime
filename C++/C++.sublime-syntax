@@ -694,7 +694,7 @@ contexts:
     - include: common
 
   class-decl:
-  - match: '(?:^|(?<=>))\s*(friend\s*)?\b(class|struct|enum|(?:auto\s+)?concept)(?:\s+({{ident}}))\s*(<[^>]*>\s*)?(;)'
+  - match: '(?:^|(?<=>))\s*(friend\s*)?\b(class|struct|enum)(?:\s+({{ident}}))\s*(<[^>]*>\s*)?(;)'
     captures:
       1: storage.modifier
       2: storage.type
@@ -709,10 +709,40 @@ contexts:
     - match: \b(private|protected|public|virtual)\b
       scope: storage.modifier
 
+    - match: ^\s*(concept)\s({{ident}})\s*(=)\s*(requires)
+      captures:
+        1: storage.type
+        2: entity.name.concept
+        3: keyword.operator
+        4: keyword.control
+      push:
+        - include: common
+        - match: '{'
+          push: function
+        - match: '}'
+          pop: true
+
+
+    - match: (std)(::)(?:({{ident}})(<))?
+      captures:
+        1: storage.type
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator
+
+
+    - match: ^\s*(concept)\s({{ident}})\s*(=) 
+      captures:
+        1: storage.type
+        2: entity.name.concept
+        3: keyword.operator
+
+
+
     - match: |-
         (?x)
           (?:^|(?<=>))\s*\b
-            (class|struct|(?:auto\s+)?concept)
+            (class|struct)
             (\s+[A-Z_]+_API)?
             (?:\s+({{ident}}
               (?:::{{ident}})*
