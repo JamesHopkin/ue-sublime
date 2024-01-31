@@ -380,17 +380,20 @@ contexts:
       pop: true
     - include: common
 
-  - match: '((?:DE(?:CLARE|FINE)|IMPLEMENT)_\w+|SAFE_BOOL_OPERATORS)(\()'
+  - match: (DECLARE_(?:STATS_GROUP|CYCLE_STAT)\s*)\s*(\()\s*(TEXT\()\s*(\"{{ident}}\")\s*(\))(,)\s*(STAT(?:GROUP)?{{ident}})(,)\s*({{ident}})\s*(\);)
     captures:
-      1: support.type.ue4
+      1: support.type.event.ue4
       2: keyword.operator
-    push:
-    - match: \)
-      scope: keyword.operator
-      pop: true
-    - include: common
+      3: comment
+      4: string
+      5: comment
+      6: keyword.operator
+      7: entity.name.type.c++
+      8: keyword.operator
+      9: storage.type
+      10: keyword.operator
 
-  - match: '(UE_DECLARE_GAMEPLAY_TAG_EXTERN)(\()\s*({{ident}})'
+  - match: '((?:UE|PERSISTENCE_FRAMEWORK)_DECLARE_GAMEPLAY_TAG_EXTERN)(\()\s*({{ident}})'
     captures:
       1: support.type.ue4
       2: keyword.operator
@@ -401,7 +404,7 @@ contexts:
       pop: true
     - include: common
 
-  - match: '(UE_DEFINE_GAMEPLAY_TAG(?:_STATIC|_COMMENT)?)(\()\s*({{ident}})'
+  - match: '((?:UE|PERSISTENCE_FRAMEWORK)_DEFINE_GAMEPLAY_TAG(?:_STATIC|_COMMENT)?)(\()\s*({{ident}})'
     captures:
       1: support.type.ue4
       2: keyword.operator
@@ -490,6 +493,12 @@ contexts:
       4: keyword.operator
       5: constant
     push: function
+
+  # Until I make a proper scope for template arguments, this goes in the prototype
+  - match: \b(UE_REQUIRES)\s*(\()
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
 
   - match: |-
       (?x)    # pretty much any open parenthesis indicates a function definition/declaration (known issue: parses function pointers incorrectly)
@@ -737,8 +746,6 @@ contexts:
         2: entity.name.concept
         3: keyword.operator
 
-
-
     - match: |-
         (?x)
           (?:^|(?<=>))\s*\b
@@ -796,6 +803,14 @@ contexts:
       captures:
         1: keyword.operator
         2: support.type.ue4
+
+    - comment: '--- UE4 (delegate) ---'
+      match: (SCOPE_CYCLE_COUNTER)(\()\s*({{ident}})\s*(\))
+      captures:
+        1: support.type.ue4
+        2: keyword.operator
+        3: storage.type
+        4: keyword.operator
 
     - match: \b(class|concept|enum|struct|typedef|union|asm|auto|bool|char|char16_t|char32_t|double|float|int|long|nullptr_t|ptrdiff_t|short|signed|size_t|template|unsigned|void|wchar_t)\b
       scope: storage.type

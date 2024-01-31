@@ -682,7 +682,6 @@ UE_DEFINE_GAMEPLAY_TAG_STATIC(Foo, "Tag.Name");
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Woo, "Tag.Name", "comment");
 //  ^ support.type.ue4
 
-
 junk struct X {};
 //          ^ -entity
 
@@ -691,6 +690,26 @@ template <class X> struct Blah {};
 //              ^ -entity
 //               ^ keyword.operator
 //                        ^^^^ entity.name.type
+
+template <
+
+>
+
+
+template <
+    class X
+//        ^ -entity
+> {};
+
+why broken?
+
+
+    // UE_REQUIRES(std::blah<>)
+//  ^^^^^^^^^^^ support.type.ue4
+
+
+
+struct Blah {};
 
 EWooble::xyz
 //     ^^ keyword.operator
