@@ -359,7 +359,7 @@ contexts:
             - match: ''''
               pop: true
 
-        - match: from|as|[{}]
+        - match: \b(from|as|require)\b|[={}()]
           scope: keyword.operator
         - match: \*
           scope: storage.type
