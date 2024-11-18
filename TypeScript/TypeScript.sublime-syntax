@@ -90,7 +90,7 @@ contexts:
         scope: constant.character.escape
       - match: '\\[dDsSwW]'
         scope: constant.character
-      - match: '(?<!\\)/'
+      - match: '(?<!\\)/([igmsuy]*)'
         pop: true
 
     - match: '(?<!\.)\.{3}(?!\.)'
