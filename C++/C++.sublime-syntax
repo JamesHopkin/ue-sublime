@@ -234,7 +234,6 @@ contexts:
       4: keyword.operator 
       5: entity.name.type 
 
-
   - comment: '--- EOS ---' 
     match: '(EOS_DECLARE_FUNC)(\()' 
     captures: 
@@ -537,7 +536,7 @@ contexts:
         ) 
       )\s* 
       (?: # 3    4   5 
-        \s*(<)([^>]*)(>)\s*  # falls over on nested template specialisation arguments or multi-line declarations - oh well 
+        \s*(<)(?!<)([^>]*)(>)\s*  # falls over on nested template specialisation arguments or multi-line declarations - oh well 
       )?(\()(?![&*]) 
     captures: 
       1: entity.name.function 
@@ -547,14 +546,14 @@ contexts:
       5: keyword.operator 
     push: [function, function-args] 
  
-  - match: '(template)\s*(<)' 
+  - match: '(template)\s*(<)(?!<)' 
     captures: 
       1: storage.type 
       2: keyword.operator 
     push: template-args 
  
   # pre catch for variables 
-  - match: '(?:({{ue4type}})|{{ident}})\s*(<)' 
+  - match: '(?:({{ue4type}})|{{ident}})\s*(<)(?!<)' 
     captures: 
       1: storage.type.ue4 
       2: keyword.operator 
@@ -687,7 +686,7 @@ contexts:
  
   template-args: 
     - meta_scope: meta.template-args 
-    - match: < 
+    - match: '<(?!<)'
       scope: keyword.operator 
       push: template-args 
     - match: '([>;])|[{}]'  # semi-colon limits damage of missing or misparsed < 
@@ -698,7 +697,7 @@ contexts:
  
   ue4-meta: 
     - meta_scope: ue4-meta 
-    - match: |- 
+    - match: |-
         (?ix)\b( 
           meta|(?:advanced|simple)display|atomic|immutable| 
           dependson|minimalapi|(?:not)?blueprint(?:able|type)| 
@@ -857,7 +856,7 @@ contexts:
     - match: '__underlying_type\s*\([^)]+\)' 
       scope: meta.preprocessor.c 
  
-    - match: '{{begin}}({{ident}})(?:\s*(<)([^>]*)(>)\s*)?(\()' 
+    - match: '{{begin}}({{ident}})(?:\s*(<)(?!<)([^>]*)(>)\s*)?(\()' 
       captures: 
         1: support.function 
         2: keyword.operator 
