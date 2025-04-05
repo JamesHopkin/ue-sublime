@@ -220,6 +220,26 @@ contexts:
     - match: \)
       pop: true
 
+  - comment: '--- Expression parser ---'
+    match: (DEFINE_EXPRESSION_NODE_TYPE)(\()
+    captures:
+      1: support.type
+      2: keyword.operator
+
+  - match: (DEFINE_QUEST_FILTER_EXPRESSION_OPERATOR_NODE)(\()
+    captures:
+      1: support.function
+      2: keyword.operator
+
+  - match: '(DEFINE_EXPRESSION_OPERATOR_NODE)(\()\s*([A-Z_]+_API)\s*(,)\s*({{ident}})'
+    captures:
+      1: support.type.ue4
+      2: keyword.operator
+      3: comment.dll-decl
+      4: keyword.operator
+      5: entity.name.type
+
+
   - comment: '--- EOS ---'
     match: '(EOS_DECLARE_FUNC)(\()'
     captures:
@@ -369,7 +389,7 @@ contexts:
       pop: true
     - include: common
 
-  - match: '(DEFINE_LATENT_AUTOMATION_COMMAND\w*)\s*(\()\s*({{ident}})'
+  - match: (IMPLEMENT_[A-Z]+_AUTOMATION_TEST\w*)\s*(\()\s*({{ident}})
     captures:
       1: support.type.command.ue4
       2: keyword.operator
@@ -379,6 +399,16 @@ contexts:
       scope: keyword.operator
       pop: true
     - include: common
+
+  # - match: '((?:DE(?:CLARE|FINE)|IMPLEMENT)_\w+|SAFE_BOOL_OPERATORS)(\()'
+  #   captures:
+  #     1: support.type.ue4
+  #     2: keyword.operator
+  #   push:
+  #   - match: \)
+  #     scope: keyword.operator
+  #     pop: true
+  #   - include: common
 
   - match: (DECLARE_(?:STATS_GROUP|CYCLE_STAT)\s*)\s*(\()\s*(TEXT\()\s*(\"{{ident}}\")\s*(\))(,)\s*(STAT(?:GROUP)?{{ident}})(,)\s*({{ident}})\s*(\);)
     captures:

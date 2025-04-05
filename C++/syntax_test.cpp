@@ -695,20 +695,13 @@ template <
 
 >
 
+// ^ -meta.template-args
 
 template <
-    class X
-//        ^ -entity
-> {};
-
-why broken?
-
-
-    // UE_REQUIRES(std::blah<>)
+    class X 
+    UE_REQUIRES(std::blah<>)
 //  ^^^^^^^^^^^ support.type.ue4
-
-
-
+>
 struct Blah {};
 
 EWooble::xyz
@@ -758,3 +751,8 @@ void f()
     std::invoke(f);
 }
 
+
+DEFINE_EXPRESSION_OPERATOR_NODE(CORE_API, FOr, 0xf15b8ea6, 0x3ef84c48, 0xb1366a99, 0x7e930cf1)
+
+// oops
+a << b << f<x>()
