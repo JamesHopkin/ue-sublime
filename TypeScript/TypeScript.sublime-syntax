@@ -2,12 +2,13 @@
 ---
 name: TypeScript (wip)
 
-scope: source.typescript
+scope: source.ts
 extensions: ["ts"]
 variables:
   ident: '[A-Za-z_$]+[A-Za-z_0-9]*'
   hex_digit: '[0-9a-fA-F]'
-  operator: '[\-\[\]+/*<>.^&|%!=~:,()?;]'
+  operators_no_brackets: '\-+/*<>.^&|%!=~:,?;'  
+  operator: '[{{operators_no_brackets}}\[\](){}]'
   begin: '(?<=\s|^|{{operator}}|[{}])' # tried to put \s* on the front to fix int x(3); init
   end: '(?=\s|$|{{operator}}|[{}])'
 contexts:
@@ -82,16 +83,29 @@ contexts:
             - include: common
         - include: string-content
 
-    - match: '(?<![a-zA-Z_0-9\s])\s*/(?![/*])(?=.*/)'
+    - match: '(?<=[{{operators_no_brackets}}({\[]|return|throw|case|^)\s*/(?![/*])'
       scope: punctuation.definition.string.begin
       push:
       - meta_scope: string.regexp
-      - match: '\\[\\bnr/|()*+?]'
+      - match: '\\[\\bnr/|()*+?.{}^$]'
+        scope: string
+      - match: '[\[\]|^$.]'
         scope: constant.character.escape
-      - match: '\\[dDsSwW]'
-        scope: constant.character
-      - match: '(?<!\\)/([igmsuy]*)'
+      - match: '[*?+]'
+        scope: constant
+      - match: '\{[\d,]+\}'
+        scope: constant
+      - match: '\((?:\?(?::|!|<=|>=|<!|>))?|\)'
+        scope: entity
+      - match: '\\[dDsSwW]' 
+        scope: support
+      - match: '/([igmsuy]*)'
+        captures:
+          1: string
         pop: true
+      - match: '$\n' 
+        scope: invalid.illegal 
+        pop: true 
 
     - match: '(?<!\.)\.{3}(?!\.)'
       scope: storage.type
