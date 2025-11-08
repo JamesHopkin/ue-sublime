@@ -1,75 +1,74 @@
-// SYNTAX TEST "C++.sublime-syntax"
+@ SYNTAX TEST "C++ (Test).sublime-syntax"
 
 #include "abc.h"
-// <- meta.preprocessor.c -keyword.control.import
- // <- keyword.control.import
-//^^^^^^ keyword.control.import
+@  <- meta.preprocessor.c -keyword.control.import
+@^^^^^^^ keyword.control.import
   #include <wootle>
-//         ^^^^^^^^ string
+@          ^^^^^^^^ string
 
 // number filenames in system paths are highlighted - accident due to prototype but kind of ok
 #include <0x123.txt
 // (testing include is closed at end of line, just as damage limitation in case of a problem)
 
  #if 0
-//   ^ constant.numeric
+@    ^ constant.numeric
 
 UCLASS(BlueprintType, Blah="hello")
-// <- comment
-//   ^^^^^^^^^^^^^^^^^^^^^^^^^ comment
+@  <- comment
+@    ^^^^^^^^^^^^^^^^^^^^^^^^^ comment
 
 # endif
-// <- meta.preprocessor.c -keyword.control.import
-//^^^^^ meta.preprocessor.c keyword.control.import
+@  <- meta.preprocessor.c -keyword.control.import
+@ ^^^^^ meta.preprocessor.c keyword.control.import
 
 
 #
-// <- meta.preprocessor.c
+@  <- meta.preprocessor.c
 # if ECAPS_ < 2
-// <- meta.preprocessor.c -keyword.control.import
-//^^ meta.preprocessor.c keyword.control.import
-//   ^^^^^^ meta.preprocessor.c
-//          ^ meta.preprocessor keyword.operator
-//            ^ constant.numeric
+@  <- meta.preprocessor.c -keyword.control.import
+@ ^^ meta.preprocessor.c keyword.control.import
+@    ^^^^^^ meta.preprocessor.c
+@           ^ meta.preprocessor keyword.operator
+@             ^ constant.numeric
 
 # define  BLAH  jks class
-//^^^^^^ keyword.control.import.define
-//        ^^^^ entity.name.function.preprocessor
+@ ^^^^^^ keyword.control.import.define
+@         ^^^^ entity.name.function.preprocessor
 
 #define  BLAH  jks class   \
     void f() { ---
-//       ^ -entity
-//             ^ -meta.block
+@        ^ -entity
+@              ^ -meta.block
 
 
 abc "def" ghi "g\"h\ni\\" jkl
-//            ^^^^^^^^^^^ string 
-//              ^^ string constant.character.escape
-//                 ^^ string constant.character.escape 
-//                    ^^ string constant.character.escape 
+@             ^^^^^^^^^^^ string 
+@               ^^ string constant.character.escape
+@                  ^^ string constant.character.escape 
+@                     ^^ string constant.character.escape 
 
 abc 'def' ghi 'g\'h\ni\\' jkl
-//            ^^^^^^^^^^^ string 
-//              ^^ string constant.character.escape
-//                 ^^ string constant.character.escape 
-//                    ^^ string constant.character.escape 
+@             ^^^^^^^^^^^ string 
+@               ^^ string constant.character.escape
+@                  ^^ string constant.character.escape 
+@                     ^^ string constant.character.escape 
 
 L"blah"
-// <- string
+@  <- string
 
 /* blah 'hello' */
-//  ^ comment
-//          ^ -string
+@   ^ comment
+@           ^ -string
 
 
 template <class X=T<X>> x = 3;      // check variables are recognised after matching template brackets
-// <- storage.type
-//       ^ keyword.operator
-//        ^^^^^ storage.type
-//              ^ -variable
-//               ^ keyword.operator
-//                   ^^ keyword.operator
-//                      ^ variable
+@  <- storage.type
+@        ^ keyword.operator
+@         ^^^^^ storage.type
+@               ^ -variable
+@                ^ keyword.operator
+@                    ^^ keyword.operator
+@                       ^ variable
 
 
 void $func();
@@ -81,45 +80,45 @@ void Class::operator!<abc>()
 }
 
 class BLAH_API Class<int>
-//    ^^^^^^^^ -entity.name.type
-//             ^^^^^ entity.name.type
-//                  ^ keyword.operator
-//                   ^^^ storage.type
-//                      ^ keyword.operator
+@     ^^^^^^^^ -entity.name.type
+@              ^^^^^ entity.name.type
+@                   ^ keyword.operator
+@                    ^^^ storage.type
+@                       ^ keyword.operator
 {
     DEPRECATED(123, "blah", ReplicatedUsing)
-//  ^^^^^^^^^^ support.type.ue4
-//            ^ keyword.operator
-//                ^ keyword.operator
-//                  ^^^^^^ string
-//                        ^ keyword.operator
+@   ^^^^^^^^^^ support.type.ue4
+@             ^ keyword.operator
+@                 ^ keyword.operator
+@                   ^^^^^^ string
+@                         ^ keyword.operator
 
     void func(int param=7)
-//                ^^^^^ -variable
+@                 ^^^^^ -variable
     {
 
     }
 
 
     void func(class Xyz xyz)
-//       ^^^^ entity.name.function
-//                  ^^^ -entity.name.type
+@        ^^^^ entity.name.function
+@                   ^^^ -entity.name.type
     {
 
         void not_a_func();
-//           ^^^^^^^^^^ -entity.name.function
+@            ^^^^^^^^^^ -entity.name.function
 
         .blah 
-//       ^^^^ - variable
+@        ^^^^ - variable
 
         var.member;
-//          ^^^^^^ variable
+@           ^^^^^^ variable
 
         ->blah 
-//        ^^^^ -variable
+@         ^^^^ -variable
 
         var->member;
-//           ^^^^^^ variable
+@            ^^^^^^ variable
 
         var.x1.x2;
 
@@ -128,123 +127,121 @@ class BLAH_API Class<int>
         var->x1->x2;
 
         var.memfunc();
-//          ^^^^^^^ support.function
+@           ^^^^^^^ support.function
 
         var->memfunc();
-//           ^^^^^^^ support.function
+@            ^^^^^^^ support.function
 
         case xyz:
-//      ^^^^ keyword.control
-//           ^^^ constant
+@       ^^^^ keyword.control
+@            ^^^ constant
 
         case EType::xyz:
-//      ^^^^ keyword.control
-//           ^^^^^ storage.type
-//                ^^ keyword.operator
-//                  ^^^ constant
+@       ^^^^ keyword.control
+@            ^^^^^ storage.type
+@                 ^^ keyword.operator
+@                   ^^^ constant
 
 label:
-// <- meta.preprocessor.c
-//   ^ keyword.operator
+@  <- meta.preprocessor.c
+@    ^ keyword.operator
 
         123e7  123.f  123.45e3  .45f  123f  0x369abcdef  0X12.3p2l -123f
-//                                                                 ^^^^^ constant.numeric
-//                                                       ^^^^^^^^^       constant.numeric
-//                                          ^^^^^^^^^^^                  constant.numeric
-//                                    ^^^^                               constant.numeric
-//                              ^^^^                                     constant.numeric
-//                    ^^^^^^^^                                           constant.numeric
-//             ^^^^^                                                     constant.numeric
-//      ^^^^^                                                            constant.numeric
+@                                                                  ^^^^^ constant.numeric
+@                                                        ^^^^^^^^^       constant.numeric
+@                                           ^^^^^^^^^^^                  constant.numeric
+@                                     ^^^^                               constant.numeric
+@                               ^^^^                                     constant.numeric
+@                     ^^^^^^^^                                           constant.numeric
+@              ^^^^^                                                     constant.numeric
+@       ^^^^^                                                            constant.numeric
 
         1,2,3
-//      ^ constant.numeric
-//       ^ keyword.operator
-//        ^ constant.numeric
-//         ^ keyword.operator
-//          ^ constant.numeric
+@       ^ constant.numeric
+@        ^ keyword.operator
+@         ^ constant.numeric
+@          ^ keyword.operator
+@           ^ constant.numeric
 
         $123
-//      ^^^^ -constant
+@       ^^^^ -constant
 
         ABC_DEF
-//      ^^^^^^^ constant
+@       ^^^^^^^ constant
 
     }
 
     ~Class();
-//  ^ entity
+@   ^ entity
 
     using Super::Type;
-//  ^^^^^ keyword.control
-//             ^^ keyword.operator
-//               ^^^^ entity
-//                   ^ keyword.operator
+@   ^^^^^ keyword.control
+@              ^^ keyword.operator
+@                ^^^^ entity
+@                    ^ keyword.operator
     using (123); // make sure unusual expressions don't mess it up
-//  ^^^^^ keyword.control
-//        ^ keyword.operator
-//            ^^ keyword.operator
+@   ^^^^^ keyword.control
+@         ^ keyword.operator
+@             ^^ keyword.operator
 
     void operator!();
-//       ^^^^^^^^^ entity.name.function
-//                ^^^ keyword.operator
+@        ^^^^^^^^^ entity.name.function
+@                 ^^^ keyword.operator
     void C :: operator->*();
-//       ^^^^^^^^^^^^^^^^ entity.name.function
-//                       ^^^ keyword.operator
+@        ^^^^^^^^^^^^^^^^ entity.name.function
+@                        ^^^ keyword.operator
     void operator ( ) ();
-//       ^^^^^^^^^^^^ entity.name.function
-//                    ^^^ keyword.operator
+@        ^^^^^^^^^^^^ entity.name.function
+@                     ^^^ keyword.operator
     void operator ( ) <X> ();
-//       ^^^^^^^^^^^^ entity.name.function
-//                    ^ keyword.operator
-//                     ^ storage.type
-//                      ^ keyword.operator
-//                        ^^^ keyword.operator
+@        ^^^^^^^^^^^^ entity.name.function
+@                     ^ keyword.operator
+@                      ^ storage.type
+@                       ^ keyword.operator
+@                         ^^^ keyword.operator
 };
 
 
 Class::~Class();
-//     ^ entity
+@      ^ entity
 
 class Class;
-// <- storage.type
- // <- storage.type
-//^^^ storage.type
-//    ^^^^^ storage.type
-//         ^ keyword.operator
+@  <- storage.type
+@^^^^ storage.type
+@     ^^^^^ storage.type
+@          ^ keyword.operator
 
 template <class> class Class;
-// <- storage.type
- // <- storage.type
-//^^^^^^ storage.type
-//       ^ keyword.operator
-//        ^^^^^ storage.type
-//             ^ keyword.operator
-//               ^^^^^ storage.type
-//                     ^^^^^ storage.type
-//                          ^ keyword.operator
+@  <- storage.type
+@^^^^^^^ storage.type
+@        ^ keyword.operator
+@         ^^^^^ storage.type
+@              ^ keyword.operator
+@                ^^^^^ storage.type
+@                      ^^^^^ storage.type
+@                           ^ keyword.operator
 
 
 class Blah : public X<blah>
 {
 
 }
- // <-      invalid.illegal
+@^          invalid.illegal
 
 enum Enum
 {
     Blah
-//  ^^^^ constant
+@   ^^^^ constant
 }
- // <-      invalid.illegal
+@^          invalid.illegal
 
 struct S
 {
     enum : int32
     {
         Blah = Another
-//      ^^^^ constant
-//             ^^^^^^^ constant        
+@       ^^^^ constant
+@              ^^^^^^^ constant        
     };
 };
 
@@ -253,7 +250,7 @@ namespace nmspc
 {
 
 };
- // <-      invalid.illegal
+@^          invalid.illegal
 
 namespace
 {
@@ -263,30 +260,29 @@ namespace
 
 
 void f();
-// <- storage.type
-//   ^ entity.name.function
-//    ^^^ keyword.operator
+@  <- storage.type
+@    ^ entity.name.function
+@     ^^^ keyword.operator
 
 namespace N
 {
 };
- // <-      invalid.illegal
+@^          invalid.illegal
 
 namespace
 {
   struct Inside;
 }
- // <-      -invalid.illegal
+@^          -invalid.illegal
 
 /* blah 'hello' */
-//  ^ comment
-//          ^ -string
+@   ^ comment
+@           ^ -string
 
 concept Anything = true;
-// <- storage.type
- // <- storage.type
-//^^^^^ storage.type
-//      ^^^^^^^^ entity.name.concept
+@  <- storage.type
+@^^^^^^ storage.type
+@       ^^^^^^^^ entity.name.concept
 
 
 // will need a concept context to match = being on the next line
@@ -294,13 +290,12 @@ concept Anything = true;
 
 template <class X>
 concept C = requires(X x)
-// <- storage.type
- // <- storage.type
-//^^^^^ storage.type
-//      ^ entity.name.concept
-//        ^ keyword.operator
-//          ^^^^^^^^ keyword.control
-//                  ^ keyword.operator
+@  <- storage.type
+@^^^^^^ storage.type
+@       ^ entity.name.concept
+@         ^ keyword.operator
+@           ^^^^^^^^ keyword.control
+@                   ^ keyword.operator
 
 {
     { std::visit(TakesBlah{}, std::declval<C>()) } -> Anything;
@@ -310,45 +305,45 @@ concept C = requires(X x)
 
 // for now, at least make sure this doesn't start a meta block!
 
-// ^ -meta.block
+@  ^ -meta.block
 
 
 class BLAH_API Class
-//    ^^^^^^^^ -entity.name.type
-//             ^^^^^ entity.name.type
+@     ^^^^^^^^ -entity.name.type
+@              ^^^^^ entity.name.type
 {
     void func(class Xyz xyz)
-//       ^^^^ entity.name.function
-//                  ^^^ -entity.name.type
+@        ^^^^ entity.name.function
+@                   ^^^ -entity.name.type
     {
 
         void not_a_func();
-//           ^^^^^^^^^^ - entity.name.function
+@            ^^^^^^^^^^ - entity.name.function
 
         .blah 
-//       ^^^^ -variable
+@        ^^^^ -variable
 
         var.member;
-//          ^^^^^^ variable
+@           ^^^^^^ variable
 
         ->blah 
-//        ^^^^ -variable
+@         ^^^^ -variable
 
         var->member;
-//           ^^^^^^ variable
+@            ^^^^^^ variable
 
         var.memfunc();
-//          ^^^^^^^ support.function
+@           ^^^^^^^ support.function
 
         var->memfunc();
-//           ^^^^^^^ support.function
+@            ^^^^^^^ support.function
 
 
     }
 };
 
 class BLAH_API Abc::Def {};
-//             ^^^^^^^^ entity.name.type
+@              ^^^^^^^^ entity.name.type
 
 void operator()()
 {
@@ -360,20 +355,20 @@ class Blah : public X<blah>
 {
 
 }
- // <-      invalid.illegal
+@^          invalid.illegal
 
 enum Enum
 {
     Blah
 }
- // <-      invalid.illegal
+@^          invalid.illegal
 
 
 namespace nmspc
 {
 
 };
- // <-      invalid.illegal
+@^          invalid.illegal
 
 namespace
 {
@@ -383,47 +378,47 @@ namespace
 
 template <class X>
 class C : public X::template T<nullptr_t>::type {}
-//                                                ^      invalid.illegal
-//                                              ^^ -keyword.operator
-//                                      ^^^ keyword.operator
-//                             ^^^^^^^^^ storage.type
-//                            ^ keyword.operator
-//                  ^^^^^^^^ storage.type
-//                ^^ keyword.operator
-//        ^^^^^^ storage.modifier
-//    ^ 
+@                                                 ^      invalid.illegal
+@                                               ^^ -keyword.operator
+@                                       ^^^ keyword.operator
+@                              ^^^^^^^^^ storage.type
+@                             ^ keyword.operator
+@                   ^^^^^^^^ storage.type
+@                 ^^ keyword.operator
+@         ^^^^^^ storage.modifier
+@     ^ 
 
 
 enum class Enum : int32
-// <- storage.type
-//    ^ storage.type
-//         ^^^^ entity.name.type
-//              ^ keyword.operator
-//                ^^^^^ entity.other.inherited-class
+@  <- storage.type
+@     ^ storage.type
+@          ^^^^ entity.name.type
+@               ^ keyword.operator
+@                 ^^^^^ entity.other.inherited-class
 {
     Holy, Cow
-//   ^ constant
-//      ^ keyword.operator
-//         ^ constant
+@    ^ constant
+@       ^ keyword.operator
+@          ^ constant
 }
- // <-      invalid.illegal
+@^          invalid.illegal
 
 enum class Enum : Blah;
-//         ^^^^ storage.type
-//                ^^^^ entity.other.inherited-class
+@          ^^^^ storage.type
+@                 ^^^^ entity.other.inherited-class
 
 enum class Enum::Woo;
 
 
 
 namespace nmspc trail
-//        ^^^^^ entity.name.type.namespace
-//              ^^^^^ -entity.name.type.namespace
+@         ^^^^^ entity.name.type.namespace
+@               ^^^^^ -entity.name.type.namespace
 {
-// <- -keyword.operator
+@  <- -keyword.operator
 
 };
- // <-      invalid.illegal
+@^          invalid.illegal
 
 namespace
 {
@@ -432,76 +427,76 @@ namespace
 
 
 
-// ^ -meta.block
+@  ^ -meta.block
 
 
 UCLASS(BlueprintType, Blah="hello")
-//  <- support.type.ue4
-//                         ^^^^^^^ string
+@   <- support.type.ue4
+@                          ^^^^^^^ string
 class UHomeBaseWorkers : public UObject
-//                              ^^^^^^^ entity.other.inherited-class
+@                               ^^^^^^^ entity.other.inherited-class
 {
     GENERATED_BODY()
-//  ^^^^^^^^^^^^^^ support.type.ue4
-//                ^^ keyword.operator
+@   ^^^^^^^^^^^^^^ support.type.ue4
+@                 ^^ keyword.operator
 
     UFUNCTION(BlueprintCallable)
     virtual void CallMeMaybe() override;
 
     UPROPERTY(BlueprintReadWrite)
     int32* Blah;
-//  ^^^^^ storage.type.ue4
-//       ^ keyword.operator
-//         ^^^^ variable
-//             ^ keyword.operator
+@   ^^^^^ storage.type.ue4
+@        ^ keyword.operator
+@          ^^^^ variable
+@              ^ keyword.operator
 
     typedef char Wibble;
-//               ^^^^^^ entity.name.type
+@                ^^^^^^ entity.name.type
 
     // why is rhs a variable? should fix
     using Boo = int32;
-//  ^^^^^ keyword.control
-//        ^^^ entity.name.type
+@   ^^^^^ keyword.control
+@         ^^^ entity.name.type
 
     typedef char (*X)();
-//               ^^ keyword.operator
-//                  ^^^^ keyword.operator
+@                ^^ keyword.operator
+@                   ^^^^ keyword.operator
 
 
     friend char X;
 }
- // <-      invalid.illegal
+@^          invalid.illegal
 
 class Decl* ppp;
-//      ^ -entity
-//           ^ variable
+@       ^ -entity
+@            ^ variable
 
 class Decl & ppp;
-//      ^ -entity
-//           ^ variable
+@       ^ -entity
+@            ^ variable
 
 
 template <class X>
 class C : public X::template T<nullptr_t>::type {}
-//                                                ^      invalid.illegal
-//                                              ^^ -keyword.operator
-//                                      ^^^ keyword.operator
-//                             ^^^^^^^^^ storage.type
-//                            ^ keyword.operator
-//                  ^^^^^^^^ storage.type
-//                ^^ keyword.operator
-//        ^^^^^^ storage.modifier
-//    ^ 
+@                                                 ^      invalid.illegal
+@                                               ^^ -keyword.operator
+@                                       ^^^ keyword.operator
+@                              ^^^^^^^^^ storage.type
+@                             ^ keyword.operator
+@                   ^^^^^^^^ storage.type
+@                 ^^ keyword.operator
+@         ^^^^^^ storage.modifier
+@     ^ 
 
 
 namespace nmspc trail
-//        ^^^^^ entity.name.type.namespace
-//              ^^^^^ -entity.name.type.namespace
+@         ^^^^^ entity.name.type.namespace
+@               ^^^^^ -entity.name.type.namespace
 {
-// <- -keyword.operator
+@  <- -keyword.operator
 
 };
- // <-      invalid.illegal
+@^          invalid.illegal
 
 
 
@@ -509,40 +504,40 @@ class X
 {
 
 } name, arse;
- // <- - invalid
-//^^^^ variable
-//    ^ keyword.operator
-//      ^^^^ variable
-//          ^ keyword.operator
+@^     - invalid
+@ ^^^^ variable
+@     ^ keyword.operator
+@       ^^^^ variable
+@           ^ keyword.operator
 
 
 UCLASS(blah, meta=(hello))
-//                ^ ue4-meta ue4-meta keyword.operator
+@                 ^ ue4-meta ue4-meta keyword.operator
 
 
 // what is this about?
 void wibble = { f();
-//   ^^^^^^ variable
-//          ^ keyword.operator
-//              ^ support.function
+@    ^^^^^^ variable
+@           ^ keyword.operator
+@               ^ support.function
 
 } abc
-// ^ -meta.initializer
+@  ^ -meta.initializer
 
 void wibble = f()
-//   ^^^^^^ variable
-//          ^ keyword.operator
-//            ^ support.function
+@    ^^^^^^ variable
+@           ^ keyword.operator
+@             ^ support.function
 
 ; abc  
-// ^ -meta.initializer
+@  ^ -meta.initializer
 
 int c[3] = { pootle, perkin, posie };
-//  ^ variable
-//   ^ keyword.operator
-//    ^ constant.numeric
-//     ^ keyword.operator
-//           ^^^^^^ -variable
+@   ^ variable
+@    ^ keyword.operator
+@     ^ constant.numeric
+@      ^ keyword.operator
+@            ^^^^^^ -variable
 
 float f = 3/4;
 
@@ -550,180 +545,180 @@ class C<int> {};
 
 template <>
 void Spec<int>();
-//   ^^^^ entity.name.function
+@    ^^^^ entity.name.function
 
-// known failure (casuality of fixing template return type)
+// known failure (casuality of fixing template return typ   e)
 void Spec<X<>>();
 
 template <>
 X<> Spec<int>();
-//  ^^^^ entity.name.function
+@   ^^^^ entity.name.function
 
 // no return type
 operator X::T&();
-// <- entity.name.function
-//^^^^^^^^^^^^ entity.name.function
-//            ^^^ keyword.operator
+@  <- entity.name.function
+@ ^^^^^^^^^^^^ entity.name.function
+@             ^^^ keyword.operator
 
 operator T<int>();
 
 void func(...)
-//        ^^^ storage.type
+@         ^^^ storage.type
 {
     blah()->hello;
-//      ^^^^ keyword.operator
-//          ^^^^^ variable
-//               ^ keyword.operator
+@       ^^^^ keyword.operator
+@           ^^^^^ variable
+@                ^ keyword.operator
     blah.hello;
     Spec<int>();
-//  ^^^^ support.function
+@   ^^^^ support.function
 }
 
 IMPLEMENT_GAME_MODULE(Blah);
-//  ^ support.type.ue4
+@   ^ support.type.ue4
 
 DEFINE_LOG_CATEGORY(Woo);
-//  ^ support.type.ue4
+@   ^ support.type.ue4
 
 DECLARE_DELEGATE(FDel)
-//  ^ support.type.delegate.ue4
-//              ^ keyword.operator
-//               ^^^^ entity.name.type
-//                   ^ keyword.operator
+@   ^ support.type.delegate.ue4
+@               ^ keyword.operator
+@                ^^^^ entity.name.type
+@                    ^ keyword.operator
 
 DECLARE_POOTLE_WIBBLE_DELEGATE_RetVal(S::X&, FRetVal, int)
-//  ^ support.type.delegate.ue4
-//                                   ^ keyword.operator
-//                                    ^ storage.type
-//                                     ^^ keyword.operator
-//                                       ^ storage.type
-//                                        ^^ keyword.operator
-//                                           ^^^^^^^ entity.name.type
-//                                                  ^ keyword.operator
-//                                                    ^^^ storage.type
-//                                                       ^ keyword.operator
+@   ^ support.type.delegate.ue4
+@                                    ^ keyword.operator
+@                                     ^ storage.type
+@                                      ^^ keyword.operator
+@                                        ^ storage.type
+@                                         ^^ keyword.operator
+@                                            ^^^^^^^ entity.name.type
+@                                                   ^ keyword.operator
+@                                                     ^^^ storage.type
+@                                                        ^ keyword.operator
 DECLARE_POOTLE_WIBBLE_DELEGATE(FNoRetVal)
-//  ^ support.type.delegate.ue4
-//                            ^ keyword.operator
-//                             ^^^^^^^^^ entity.name.type
-//                                      ^ keyword.operator
+@   ^ support.type.delegate.ue4
+@                             ^ keyword.operator
+@                              ^^^^^^^^^ entity.name.type
+@                                       ^ keyword.operator
 
 DECLARE_POOTLE_WIBBLE_DELEGATE_RetVal_SomeMoreStuff(class int*, FRetValStuff, int)
-//  ^ support.type.delegate.ue4
-//                                                 ^ keyword.operator
-//                                                  ^^^^^ storage.type
-//                                                        ^^^ storage.type
-//                                                           ^^ keyword.operator
-//                                                              ^^^^^^^^^^^^ entity.name.type
-//                                                                          ^ keyword.operator
-//                                                                            ^^^ storage.type
-//                                                                               ^ keyword.operator
+@   ^ support.type.delegate.ue4
+@                                                  ^ keyword.operator
+@                                                   ^^^^^ storage.type
+@                                                         ^^^ storage.type
+@                                                            ^^ keyword.operator
+@                                                               ^^^^^^^^^^^^ entity.name.type
+@                                                                           ^ keyword.operator
+@                                                                             ^^^ storage.type
+@                                                                                ^ keyword.operator
 DECLARE_POOTLE_WIBBLE_DELEGATE_SomeMoreStuff(FNoRetValStuff, "hello")
-//  ^ support.type.delegate.ue4
-//                                          ^ keyword.operator
-//                                           ^^^^^^^^^^^^^^ entity.name.type
-//                                                         ^ keyword.operator
+@   ^ support.type.delegate.ue4
+@                                           ^ keyword.operator
+@                                            ^^^^^^^^^^^^^^ entity.name.type
+@                                                          ^ keyword.operator
 
 
 DECLARE_EVENT(UCls, FEvent)
-//  ^ support.type.event.ue4
-//           ^ keyword.operator
-//            ^^^^ storage.type
-//                ^ keyword.operator
-//                  ^^^^^^ entity.name.type
-//                        ^ keyword.operator
+@   ^ support.type.event.ue4
+@            ^ keyword.operator
+@             ^^^^ storage.type
+@                 ^ keyword.operator
+@                   ^^^^^^ entity.name.type
+@                         ^ keyword.operator
 
 DECLARE_EVENT_SomeMoreStuff(UCls, FEvent, "hello")
-//  ^ support.type.event.ue4
-//                         ^ keyword.operator
-//                          ^^^^ storage.type
-//                              ^ keyword.operator
-//                                ^^^^^^ entity.name.type
-//                                      ^ keyword.operator
+@   ^ support.type.event.ue4
+@                          ^ keyword.operator
+@                           ^^^^ storage.type
+@                               ^ keyword.operator
+@                                 ^^^^^^ entity.name.type
+@                                       ^ keyword.operator
 
 DEFINE_LATENT_AUTOMATION_COMMAND(FCommand)
-//  ^ support.type.command.ue4
-//                              ^ keyword.operator
-//                               ^^^^^^^^ entity.name.type
-//                                       ^ keyword.operator
+@   ^ support.type.command.ue4
+@                               ^ keyword.operator
+@                                ^^^^^^^^ entity.name.type
+@                                        ^ keyword.operator
 
 DEFINE_LATENT_AUTOMATION_COMMAND_SomeMoreStuff(FCommand, FType, Name)
-//  ^ support.type.command.ue4
-//                                            ^ keyword.operator
-//                                             ^^^^^^^^ entity.name.type
-//                                                     ^ keyword.operator
-//                                                       ^^^^^ storage.type
-//                                                            ^ keyword.operator
+@   ^ support.type.command.ue4
+@                                             ^ keyword.operator
+@                                              ^^^^^^^^ entity.name.type
+@                                                      ^ keyword.operator
+@                                                        ^^^^^ storage.type
+@                                                             ^ keyword.operator
 
 
 DEFINE_LATENT_AUTOMATION_COMMAND_TWO_PARAMETER(FDeltaSave_TestDeltasCheckedOut, TSharedRef<FDeltaFileTestStorage>, Storage, TArray<FPackagePath>, Expected);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(Boo)
-//  ^ support.type.ue4
-//                            ^ keyword.operator
-//                             ^^^ storage.type
-//                                ^ keyword.operator
+@   ^ support.type.ue4
+@                             ^ keyword.operator
+@                              ^^^ storage.type
+@                                 ^ keyword.operator
 
 UE_DEFINE_GAMEPLAY_TAG(Foo, "Tag.Name");
-//  ^ support.type.ue4
-//                    ^ keyword.operator
-//                     ^^^ entity.name.type
-//                          ^^^ string
-//                                    ^ keyword.operator
+@   ^ support.type.ue4
+@                     ^ keyword.operator
+@                      ^^^ entity.name.type
+@                           ^^^ string
+@                                     ^ keyword.operator
 
 
 UE_DEFINE_GAMEPLAY_TAG_STATIC(Foo, "Tag.Name");
-//  ^ support.type.ue4
-//                           ^ keyword.operator
-//                            ^^^ entity.name.type
-//                                 ^^^ string
-//                                           ^ keyword.operator
+@   ^ support.type.ue4
+@                            ^ keyword.operator
+@                             ^^^ entity.name.type
+@                                  ^^^ string
+@                                            ^ keyword.operator
 
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Woo, "Tag.Name", "comment");
-//  ^ support.type.ue4
+@   ^ support.type.ue4
 
 junk struct X {};
-//          ^ -entity
+@           ^ -entity
 
 template <class X> struct Blah {};
-//       ^ keyword.operator
-//              ^ -entity
-//               ^ keyword.operator
-//                        ^^^^ entity.name.type
+@        ^ keyword.operator
+@               ^ -entity
+@                ^ keyword.operator
+@                         ^^^^ entity.name.type
 
 template <
 
 >
 
-// ^ -meta.template-args
+@  ^ -meta.template-args
 
 template <
     class X 
     UE_REQUIRES(std::blah<>)
-//  ^^^^^^^^^^^ support.type.ue4
+@   ^^^^^^^^^^^ support.type.ue4
 >
 struct Blah {};
 
 EWooble::xyz
-//     ^^ keyword.operator
-//       ^^^ support.constant.ue4
+@      ^^ keyword.operator
+@        ^^^ support.constant.ue4
 
 EWooble::Type
-//       ^^^^ -constant
+@        ^^^^ -constant
 
 class C<void (*f)> : public B<>{} c;
-//             ^ specialisation-args -entity 
+@              ^ specialisation-args -entity 
 
 class TypeName const* Region;
-//    ^^^^^^^^^^^^^^^ -entity
-//                    ^^^^^^ variable
+@     ^^^^^^^^^^^^^^^ -entity
+@                     ^^^^^^ variable
 class const TypeName* Region;
-//    ^^^^^^^^^^^^^^^ -entity
-//                    ^^^^^^ variable
+@     ^^^^^^^^^^^^^^^ -entity
+@                     ^^^^^^ variable
 
 void (*f)() = nullptr;
-// <- -entity
-//            ^^^^^^^ constant
+@  <- -entity
+@             ^^^^^^^ constant
 
 
 // known failure (not recognised as function specialisation)
@@ -740,11 +735,10 @@ more blah
 
 // hack so std templates are known to be types?, then fallback for std::
 std::vector<int> v;
-// <- storage.type
- // <- storage.type
-//^ storage.type
-//   ^^^^^^ storage.type
-//          ^^^ storage.type
+@  <- storage.type
+@^^ storage.type
+@    ^^^^^^ storage.type
+@           ^^^ storage.type
 
 void f()
 {
@@ -753,6 +747,9 @@ void f()
 
 
 DEFINE_EXPRESSION_OPERATOR_NODE(CORE_API, FOr, 0xf15b8ea6, 0x3ef84c48, 0xb1366a99, 0x7e930cf1)
+DEFINE_EXPRESSION_NODE_TYPE(FFiBToken,  0x03378490, 0x42D14E26, 0x8E95AD2F, 0x74567868)
 
-// oops
-a << b << f<x>()
+
+// a bit broken - f<int treated a template argument
+
+bool b = x < f<int>();
