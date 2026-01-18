@@ -65,23 +65,7 @@ contexts:
 
     - match: '`'
       scope: punctuation.definition.string.template.begin.js
-      push:
-        - meta_include_prototype: false
-        - meta_scope: string.template.js
-        - match: '`'
-          scope: punctuation.definition.string.template.end.js
-          pop: true
-        - match: '\$\{'
-          scope: punctuation.definition.template-expression.begin.js
-          push:
-            - clear_scopes: 1
-            - meta_scope: meta.template.expression.js
-            - meta_content_scope: source.js.embedded.expression
-            - match: '\}'
-              scope: punctuation.definition.template-expression.end.js
-              pop: true
-            - include: common
-        - include: string-content
+      push: template-string
 
     - match: '(?<=[{{operators_no_brackets}}(\[]|return|throw|case|^)\s*/(?![/*])'
       scope: punctuation.definition.string.begin
@@ -126,6 +110,27 @@ contexts:
       scope: constant.character.escape.newline.js
     - match: '\\(x[\da-fA-F][\da-fA-F]|u[\da-fA-F][\da-fA-F][\da-fA-F][\da-fA-F]|.)'
       scope: constant.character.escape.js
+
+  template-string:
+    - meta_include_prototype: false
+    - meta_scope: string.template.js
+    - match: '`'
+      scope: punctuation.definition.string.template.end.js
+      pop: true
+    - match: '\$\{'
+      scope: punctuation.definition.template-expression.begin.js
+      push:
+        - clear_scopes: 1
+        - meta_scope: meta.template.expression.js
+        - meta_content_scope: source.js.embedded.expression
+        - match: '\}'
+          scope: punctuation.definition.template-expression.end.js
+          pop: true
+        - match: '`'
+          scope: punctuation.definition.string.template.begin.js
+          push: template-string
+        - include: common
+    - include: string-content
 
   main:
 
