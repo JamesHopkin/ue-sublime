@@ -8,7 +8,7 @@ variables:
   ident: '[A-Za-z_$]+[A-Za-z_0-9]*'
   hex_digit: '[0-9a-fA-F]'
   operators_no_brackets: '\-+/*<>.^&|%!=~:,?;'  
-  operator: '[{{operators_no_brackets}}\[\](){}]'
+  operator: '[{{operators_no_brackets}}\[\]()]'
   begin: '(?<=\s|^|{{operator}}|[{}])' # tried to put \s* on the front to fix int x(3); init
   end: '(?=\s|$|{{operator}}|[{}])'
 contexts:
@@ -83,7 +83,7 @@ contexts:
             - include: common
         - include: string-content
 
-    - match: '(?<=[{{operators_no_brackets}}({\[]|return|throw|case|^)\s*/(?![/*])'
+    - match: '(?<=[{{operators_no_brackets}}(\[]|return|throw|case|^)\s*/(?![/*])'
       scope: punctuation.definition.string.begin
       push:
       - meta_scope: string.regexp
@@ -134,6 +134,11 @@ contexts:
         1: support.type.decorator
         2: keyword.operator
       push: decorator
+
+    - match: '(?:^|(?<=export|declare))\s*(const|let|var)\s+({{ident}})\s*:[^=]*=\s*validation\.'
+      captures:
+        1: storage.type
+        2: entity.name.function
 
     - match: '(?:^|(?<=export|declare))\s*(enum)(\s+{{ident}})'
       captures:
@@ -290,14 +295,14 @@ contexts:
   common:
     - match: \b(true|false|null|undefined|NaN|default)\b
       scope: constant.language
-    - match: (?<!\.)\b(extends|implements|instanceof|throws|typeof)\b
+    - match: (?<!\.)\b(extends|implements|satisfies|instanceof|throws|typeof)\b
       scope: keyword.operator
     - match: (?<!\.)\b(as|async|await|get|set|break|case|catch|continue|do|else|finally|for|goto|if|in|new|delete|of|return|switch|throw|try|while|yield)\b
       scope: keyword.control
-    - match: (?<!\.)\b(extern|final|private|protected|public|static|abstract)\b
+    - match: (?<!\.)\b(extern|final|private|protected|public|static|abstract|override)\b
       scope: storage.modifier
 
-    - match: \b(declare|class|interface|function|any|unknown|boolean|number|string|void|type|const|readonly|let|var)\b
+    - match: \b(declare|class|interface|function|any|unknown|never|boolean|number|string|void|type|const|readonly|keyof|let|var)\b
       scope: storage.type
     - match: \b(this|super)\b
       scope: variable.language.js
