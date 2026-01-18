@@ -12,6 +12,7 @@ url.replace(/^file:\/\//, "")
 
 export const SchemaDocDecoder = validation.object({
   /\d+\.\d+\.\.d+/
+});
 
 / (?:abc) a\{\|0} (?: woo) /
 
@@ -19,6 +20,21 @@ export const SchemaDocDecoder = validation.object({
 
 function g() {
   const f = () => /test/.test(x);
+  return /test/.test(x);
+}
+
+function g(): number {
+  const f = () => /test/.test(x);
+// ^ meta.block.js.in-function
+  return /test/.test(x);
+}
+
+function g(): { pootle: number, woo: 'kitty' | 'kuromi' } {
+//                    ^ keyword.operator
+//                       ^ storage.type
+//                                     ^ string
+  const f = () => /test/.test(x);
+// ^ meta.block.js.in-function
   return /test/.test(x);
 }
 

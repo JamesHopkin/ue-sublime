@@ -227,8 +227,46 @@ contexts:
     - match: ';|(?<=})'
       scope: keyword.operator
       pop: true
+    - match: ':\s*'
+      scope: keyword.operator
+      push: return-type
     - include: common
     - include: function-block
+
+  return-type:
+    - meta_scope: meta.return-type
+    - match: '(?=\{(?!\s*\w+\s*:))' # { not followed by "prop:" pattern = function body
+      pop: true
+    - match: '\{'  # { in a type object like { foo: string }
+      scope: keyword.operator
+      push: return-type-braces
+    - match: ';'
+      scope: keyword.operator
+      pop: true
+    - match: '{{operator}}'
+      scope: keyword.operator
+    - include: common-types
+
+  return-type-braces:
+    - match: '\{'
+      scope: keyword.operator
+      push: return-type-braces
+    - match: '\}'
+      scope: keyword.operator
+      pop: true
+    - match: '{{operator}}'
+      scope: keyword.operator
+    - include: common-types
+
+  common-types:
+    - match: \b(true|false|null|undefined|NaN)\b
+      scope: constant.language
+    - match: \b(any|unknown|never|boolean|number|string|void|type|readonly|keyof)\b
+      scope: storage.type
+    - match: '\b[A-Z0-9_]+\b'
+      scope: constant
+    - match: '\b[A-Z][A-Za-z_0-9]+'
+      scope: storage.type.js
 
   function-block:
   - match: '{'
