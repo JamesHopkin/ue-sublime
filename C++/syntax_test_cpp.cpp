@@ -1,8 +1,9 @@
-@ SYNTAX TEST "C++ (Test).sublime-syntax"
+@ SYNTAX TEST "C++.sublime-syntax"
 
 #include "abc.h"
 @  <- meta.preprocessor.c -keyword.control.import
-@^^^^^^^ keyword.control.import
+ @  <- keyword.control.import
+@ ^^^^^^ keyword.control.import
   #include <wootle>
 @          ^^^^^^^^ string
 
@@ -207,13 +208,15 @@ Class::~Class();
 
 class Class;
 @  <- storage.type
-@^^^^ storage.type
+ @  <- storage.type
+@ ^^^ storage.type
 @     ^^^^^ storage.type
 @          ^ keyword.operator
 
 template <class> class Class;
 @  <- storage.type
-@^^^^^^^ storage.type
+ @  <- storage.type
+@ ^^^^^^ storage.type
 @        ^ keyword.operator
 @         ^^^^^ storage.type
 @              ^ keyword.operator
@@ -226,14 +229,14 @@ class Blah : public X<blah>
 {
 
 }
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 enum Enum
 {
     Blah
 @   ^^^^ constant
 }
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 struct S
 {
@@ -250,7 +253,7 @@ namespace nmspc
 {
 
 };
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 namespace
 {
@@ -267,13 +270,13 @@ void f();
 namespace N
 {
 };
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 namespace
 {
   struct Inside;
 }
-@^          -invalid.illegal
+ @  <-      -invalid.illegal
 
 /* blah 'hello' */
 @   ^ comment
@@ -281,7 +284,8 @@ namespace
 
 concept Anything = true;
 @  <- storage.type
-@^^^^^^ storage.type
+ @  <- storage.type
+@ ^^^^^ storage.type
 @       ^^^^^^^^ entity.name.concept
 
 
@@ -291,7 +295,8 @@ concept Anything = true;
 template <class X>
 concept C = requires(X x)
 @  <- storage.type
-@^^^^^^ storage.type
+ @  <- storage.type
+@ ^^^^^ storage.type
 @       ^ entity.name.concept
 @         ^ keyword.operator
 @           ^^^^^^^^ keyword.control
@@ -355,20 +360,20 @@ class Blah : public X<blah>
 {
 
 }
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 enum Enum
 {
     Blah
 }
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 
 namespace nmspc
 {
 
 };
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 namespace
 {
@@ -401,7 +406,7 @@ enum class Enum : int32
 @       ^ keyword.operator
 @          ^ constant
 }
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 enum class Enum : Blah;
 @          ^^^^ storage.type
@@ -418,7 +423,7 @@ namespace nmspc trail
 @  <- -keyword.operator
 
 };
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 namespace
 {
@@ -465,7 +470,7 @@ class UHomeBaseWorkers : public UObject
 
     friend char X;
 }
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 class Decl* ppp;
 @       ^ -entity
@@ -496,7 +501,7 @@ namespace nmspc trail
 @  <- -keyword.operator
 
 };
-@^          invalid.illegal
+ @  <-      invalid.illegal
 
 
 
@@ -504,7 +509,7 @@ class X
 {
 
 } name, arse;
-@^     - invalid
+ @  <- - invalid
 @ ^^^^ variable
 @     ^ keyword.operator
 @       ^^^^ variable
@@ -736,7 +741,8 @@ more blah
 // hack so std templates are known to be types?, then fallback for std::
 std::vector<int> v;
 @  <- storage.type
-@^^ storage.type
+ @  <- storage.type
+@ ^ storage.type
 @    ^^^^^^ storage.type
 @           ^^^ storage.type
 
@@ -753,3 +759,482 @@ DEFINE_EXPRESSION_NODE_TYPE(FFiBToken,  0x03378490, 0x42D14E26, 0x8E95AD2F, 0x74
 // a bit broken - f<int treated a template argument
 
 bool b = x < f<int>();
+// SYNTAX TEST "Packages/C++ Test/C++ (Test).sublime-syntax"
+
+USTRUCT(BlueprintType)
+@ <- support.type.ue4
+@^^^^^^ support.type.ue4
+@      ^ keyword.operator
+@                    ^ keyword.operator
+
+struct FMyStruct
+@      ^^^^^^^^^ entity.name.type
+
+{
+
+    GENERATED_USTRUCT_BODY()
+@   ^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                         ^^ keyword.operator
+
+};
+
+USTRUCT(MinimalAPI)
+@ <- support.type.ue4
+@^^^^^^ support.type.ue4
+@      ^ keyword.operator
+
+struct FTestStruct
+
+{
+
+    GENERATED_BODY()
+@   ^^^^^^^^^^^^^^ support.type.ue4
+@                 ^^ keyword.operator
+
+};
+
+UENUM(BlueprintType)
+@ <- support.type.ue4
+@^^^^ support.type.ue4
+@    ^ keyword.operator
+@                  ^ keyword.operator
+
+enum class EMyEnum
+@          ^^^^^^^ entity.name.type
+
+{
+
+    Value1,
+@   ^^^^^^ constant
+
+    Value2 UMETA(DisplayName="X"),
+@   ^^^^^^ constant
+@          ^^^^^ support.type.ue4
+@               ^ keyword.operator
+@                            ^^^ string
+
+    Value3 UMETA(Hidden)
+@   ^^^^^^ constant
+@          ^^^^^ support.type.ue4
+@               ^ keyword.operator
+
+};
+
+UINTERFACE(MinimalAPI, BlueprintType)
+@ <- support.type.ue4
+@^^^^^^^^^ support.type.ue4
+@         ^ keyword.operator
+
+class UMyInterface : public UInterface
+
+{
+
+    GENERATED_UINTERFACE_BODY()
+@   ^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                            ^^ keyword.operator
+
+};
+
+UINTERFACE(Blueprintable)
+@ <- support.type.ue4
+@^^^^^^^^^ support.type.ue4
+@         ^ keyword.operator
+
+class UTestInterface : public UInterface
+
+{
+
+    GENERATED_BODY()
+@   ^^^^^^^^^^^^^^ support.type.ue4
+@                 ^^ keyword.operator
+
+};
+
+UCLASS(Abstract)
+@ <- support.type.ue4
+@^^^^^ support.type.ue4
+@     ^ keyword.operator
+
+class AMyActor : public AActor
+
+{
+
+    GENERATED_UCLASS_BODY()
+@   ^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                        ^^ keyword.operator
+
+};
+
+DEPRECATED(4.26, "X")
+@ <- support.type.ue4
+@^^^^^^^^^ support.type.ue4
+@         ^ keyword.operator
+@                ^^^ string
+
+void OldFunction();
+
+PROPERTY_BINDING_IMPLEMENTATION(FMyStruct, MyProperty)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                              ^ keyword.operator
+
+ENUM_CLASS_FLAGS(EMyFlags)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^ support.type.ue4
+@               ^ keyword.operator
+
+enum class EMyFlags
+
+{
+
+    None = 0,
+
+    Flag1 = 1 << 0,
+
+    Flag2 = 1 << 1
+
+};
+
+ENUM_RANGE_BY_COUNT(EMyEnum, EMyEnum::First, EMyEnum::Count)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                  ^ keyword.operator
+
+ENUM_RANGE_BY_FIRST_AND_LAST(EMyEnum, EMyEnum::First, EMyEnum::Last)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                           ^ keyword.operator
+
+ENUM_RANGE_BY_VALUES(EMyEnum, EMyEnum::Value1, EMyEnum::Value2)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                   ^ keyword.operator
+
+ASSET_REGISTRY_ACCESSOR(MyAsset)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                      ^ keyword.operator
+
+ASSET_BUNDLE_DATA_ACCESSOR(MyBundle)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                         ^ keyword.operator
+
+Expose_TNameOf(FMyStruct)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^ support.type.ue4
+
+BEGIN_JSON_SERIALIZER
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+
+END_JSON_SERIALIZER
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^ support.type.ue4
+
+JSON_SERIALIZE("X", MyField)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^ support.type.ue4
+@             ^ keyword.operator
+@              ^^^ string
+
+JSON_SERIALIZE_ARRAY_SERIALIZABLE("X", Items, FMyStruct)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                                ^ keyword.operator
+
+JSON_SERIALIZE_OBJECT_SERIALIZABLE("X", Data, FMyData)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                                 ^ keyword.operator
+
+BEGIN_ONLINE_JSON_SERIALIZER
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+
+END_ONLINE_JSON_SERIALIZER
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+
+SLATE_BEGIN_ARGS(SMyWidget)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^^^ storage.type.ue4
+@               ^ keyword.operator
+
+SLATE_END_ARGS()
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^ storage.type.ue4
+@             ^^ keyword.operator
+
+SLATE_ARGUMENT(FText, Label)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^ storage.type.ue4
+@             ^ keyword.operator
+
+SLATE_ATTRIBUTE(FText, Text)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^^ storage.type.ue4
+@              ^ keyword.operator
+
+SLATE_EVENT(FOnClicked, OnClicked)
+@ <- storage.type.ue4
+@^^^^^^^^^^ storage.type.ue4
+@          ^ keyword.operator
+
+SLATE_DEFAULT_SLOT(FArguments, Content)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^^^^^ storage.type.ue4
+@                 ^ keyword.operator
+
+SLATE_NAMED_SLOT(FArguments, Header)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^^^ storage.type.ue4
+@               ^ keyword.operator
+
+SLATE_SUPPORTS_SLOT(FSlot)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^^^^^^ storage.type.ue4
+@                  ^ keyword.operator
+
+SLATE_SUPPORTS_SLOT_WITH_ARGS(FSlotArguments)
+@ <- storage.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^ storage.type.ue4
+@                            ^ keyword.operator
+
+DECLARE_DELEGATE(FMyDelegate)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@               ^ keyword.operator
+@                ^^^^^^^^^^^ entity.name.type
+
+DECLARE_DELEGATE_OneParam(FMyDelegateOneParam, int32)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                        ^ keyword.operator
+@                         ^^^^^^^^^^^^^^^^^^^ entity.name.type
+
+DECLARE_DELEGATE_TwoParams(FMyDelegateTwoParams, int32, float)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                         ^ keyword.operator
+@                          ^^^^^^^^^^^^^^^^^^^^ entity.name.type
+
+DECLARE_DELEGATE_RetVal(bool, FMyRetValDelegate)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                      ^ keyword.operator
+@                       ^^^^ storage.type
+@                             ^^^^^^^^^^^^^^^^^ entity.name.type
+
+DECLARE_MULTICAST_DELEGATE(FMyMulticastDelegate)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                         ^ keyword.operator
+@                          ^^^^^^^^^^^^^^^^^^^^ entity.name.type
+
+DECLARE_DYNAMIC_DELEGATE(FMyDynamicDelegate)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                       ^ keyword.operator
+@                        ^^^^^^^^^^^^^^^^^^ entity.name.type
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMyDynamicMulticastDelegate)
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                                 ^ keyword.operator
+@                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^ entity.name.type
+
+DECLARE_EVENT(UMyClass, FMyEvent)
+@ <- support.type.event.ue4
+@^^^^^^^^^^^^ support.type.event.ue4
+@            ^ keyword.operator
+@             ^^^^^^^^ storage.type
+@                       ^^^^^^^^ entity.name.type
+
+
+DECLARE_MULTICAST_DELEGATE_WITH_SIGNATURE(FMySignatureDelegate, void())
+@ <- support.type.delegate.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.delegate.ue4
+@                                        ^ keyword.operator
+
+DEFINE_LATENT_AUTOMATION_COMMAND(FMyTestCommand)
+@ <- support.type.command.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.command.ue4
+@                               ^ keyword.operator
+@                                ^^^^^^^^^^^^^^ entity.name.type
+
+DEFINE_LATENT_AUTOMATION_COMMAND_ONE_PARAMETER(FMyTestOneParam, int32, Value)
+@ <- support.type.command.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.command.ue4
+@                                             ^ keyword.operator
+@                                              ^^^^^^^^^^^^^^^ entity.name.type
+
+// probably should define the types
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FMyTest, "MyCategory.MyTest", EAutomationTestFlags::ApplicationContextMask)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                               ^ keyword.operator
+@                                ^^^^^^^ storage.type
+
+IMPLEMENT_COMPLEX_AUTOMATION_TEST(FMyComplexTest, "MyCategory.MyComplexTest", EAutomationTestFlags::ApplicationContextMask)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                                ^ keyword.operator
+@                                 ^^^^^^^^^^^^^^ storage.type
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(MyGameplayTag)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                             ^ keyword.operator
+@                              ^^^^^^^^^^^^^ storage.type
+
+UE_DEFINE_GAMEPLAY_TAG(MyTag, "X")
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                     ^ keyword.operator
+@                      ^^^^^ entity.name.type
+@                             ^^^ string
+
+UE_DEFINE_GAMEPLAY_TAG_STATIC(MyStaticTag, "X")
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                            ^ keyword.operator
+@                             ^^^^^^^^^^^ entity.name.type
+@                                          ^^^ string
+
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(MyCommentTag, "X", "Y")
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                             ^ keyword.operator
+@                              ^^^^^^^^^^^^ entity.name.type
+@                                            ^^^ string
+
+PERSISTENCE_FRAMEWORK_DECLARE_GAMEPLAY_TAG_EXTERN(MyPersistenceTag)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                                                ^ keyword.operator
+@                                                 ^^^^^^^^^^^^^^^^ storage.type
+
+PERSISTENCE_FRAMEWORK_DEFINE_GAMEPLAY_TAG(MyPersistenceTag, "Persistence.MyTag")
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                                        ^ keyword.operator
+@                                         ^^^^^^^^^^^^^^^^ entity.name.type
+
+IMPLEMENT_MODULE(FDefaultModuleImpl, MyModule)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^ support.type.ue4
+@               ^ keyword.operator
+
+IMPLEMENT_GAME_MODULE(FMyGameModule, MyGame)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                    ^ keyword.operator
+
+IMPLEMENT_PRIMARY_GAME_MODULE(FDefaultGameModuleImpl, MyGame, "MyGame")
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                            ^ keyword.operator
+
+DEFINE_LOG_CATEGORY(LogMyModule)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                  ^ keyword.operator
+
+DEFINE_LOG_CATEGORY_STATIC(LogMyStatic, Log, All)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                         ^ keyword.operator
+
+DECLARE_LOG_CATEGORY_EXTERN(LogMyExtern, Log, All)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                          ^ keyword.operator
+
+FUNCTION_CHECK_RETURN(MyFunction())
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                    ^ keyword.operator
+
+} need fixing
+ @ <- -meta.function
+
+template <typename T
+    UE_REQUIRES(std::is_integral_v<T>)>
+@   ^^^^^^^^^^^ support.type.ue4
+@              ^ keyword.operator
+
+UE_IMPLEMENT_STRUCT(FMyStruct)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                  ^ keyword.operator
+
+DEFINE_EXPRESSION_OPERATOR_NODE(CORE_API, FMyOperator, 0x12345678, 0x9abcdef0, 0x11111111, 0x22222222)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                              ^ keyword.operator
+
+DEFINE_EXPRESSION_NODE_TYPE(FMyNodeType, 0x12345678, 0x9abcdef0, 0x11111111, 0x22222222)
+@ <- support.type.ue4
+@^^^^^^^^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                          ^ keyword.operator
+
+void MyFunction()
+
+{
+
+    SCOPE_CYCLE_COUNTER(STAT_MyFunction)
+@   ^^^^^^^^^^^^^^^^^^^ support.type.ue4
+@                      ^ keyword.operator
+
+}
+
+EOS_DECLARE_FUNC(EOS_EResult) EOS_Auth_Login;
+@ <- support.type.eos
+@^^^^^^^^^^^^^^^ support.type.eos
+@               ^ keyword.operator
+
+UCLASS(BlueprintType, Category="X")
+@ <- support.type.ue4
+@^^^^^ support.type.ue4
+@     ^ keyword.operator
+@                              ^^^ string
+
+class UMyObject : public UObject
+
+{
+
+    GENERATED_BODY()
+@   ^^^^^^^^^^^^^^ support.type.ue4
+@                 ^^ keyword.operator
+
+    UPROPERTY(BlueprintReadWrite, Category="X")
+@   ^^^^^^^^^ support.type.ue4
+@            ^ keyword.operator
+@                                          ^^^ string
+
+    int32 MyProperty;
+
+    UFUNCTION(BlueprintCallable, Category="X")
+@   ^^^^^^^^^ support.type.ue4
+@            ^ keyword.operator
+@                                         ^^^ string
+
+    void MyFunction();
+
+};
+
+TEXT("abc")
+@ ^ comment
+
+TEXT("abc
+@        ^ invalid
+
+TEXT("abc" \
+@          ^ -invalid
+    "woo" )
+@   ^ string
+
+"%a %ls"
+@^^ -keyword.control
+@   ^^^ keyword.control

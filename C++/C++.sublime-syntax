@@ -7,14 +7,13 @@ extensions: ["cpp", "h", "inl"]
 variables: 
   ident: '[A-Za-z_][A-Za-z_0-9]*' 
   cppident: '(?:{{ident}}\s*(::)\s*)*{{ident}}(?<!template)\b' 
-# actor, enum, type, interface, Slate, template, UObject 
   ue4type: '\b[AEFISTU][A-Z][A-Za-z0-9_]+\b' 
   hex_digit: '[0-9a-fA-F'']' 
   operator: '[\-\[\]+/*<>.^&|%!=~:,()?;]' 
   begin: '(?<=\s|^|{{operator}}|[{}])' 
   end: '(?=\s|$|{{operator}}|[{}])' 
   access: 'public|private|protected' 
-  printf: '%(?:\d+$)?[+-]?(?:[ 0]|''.{1})?-?\d*(?:\.\d+)?[bcdeEufFgGosxX]' 
+  printf: '%(?:\d+$)?[+-]?(?:[ 0]|''.{1})?-?\d*(?:\.\d+)?(l?s|[bcdeEufFgGoxX])' 
   string_esc: '\\(?:[\\bnrt]' 
 contexts: 
   prototype: 
@@ -69,28 +68,12 @@ contexts:
       - match: '''' 
         pop: true 
  
-  - match: '\b(TEXT\()\s*(")' 
-    captures: 
-      1: comment 
-      2: punctuation.definition.string.begin 
-    push: 
-      - meta_scope: string.double-quote 
-      - match: '{{string_esc}}|")' 
-        scope: constant.character.escape 
-      - match: '{{printf}}' 
-        scope: keyword.control 
-      - match: '"\s*[^)\s]' 
-        scope: invalid.illegal 
-        pop: true 
-      - match: '(")\s*(\))' 
-        captures: 
-          1: punctuation.definition.string.end 
-          2: comment 
-        pop: true 
-      - match: '$\n' 
-        scope: invalid.illegal 
-        pop: true 
-  - match: '(TEXT\()('')' 
+  - match: '\b(TEXT(?:VIEW)?\()\s*(")'
+    captures:
+      1: comment
+      2: punctuation.definition.string.begin
+    push: text-string-body
+  - match: '(TEXT\()('')'
     captures: 
       1: comment 
       2: punctuation.definition.string.begin 
@@ -98,16 +81,18 @@ contexts:
       - meta_scope: string.single-quote 
       - match: '{{string_esc}}|'')' 
         scope: constant.character.escape 
-      - match: '('')(\))' 
-        captures: 
-          1: punctuation.definition.string.end 
-          2: comment 
-        pop: true 
-      - match: '$\n' 
-        scope: invalid.illegal 
-        pop: true 
- 
-  - match: '(?<!\.)\.{3}(?!\.)' 
+      - match: '('')(\))'
+        captures:
+          1: punctuation.definition.string.end
+          2: comment
+        pop: true
+      - match: '\\\s*\n'
+        scope: keyword.operator
+      - match: '$\n'
+        scope: invalid.illegal
+        pop: true
+
+  - match: '(?<!\.)\.{3}(?!\.)'
     scope: storage.type 
  
   - match: '{{begin}}-?(\.\d+|\d+\.?\d*)([Ee]\d+)?[Uu]?[FfLl]?{{end}}' 
@@ -149,14 +134,54 @@ contexts:
   - match: \b(const|constexpr|explicit|export|extern|final|friend|inline|mutable|noexcept|override|register|static|thread_local|typename|volatile)\b 
     scope: storage.modifier 
  
-  inside-if0: 
-  - match: '^\s*(#)\s*(if)\b' 
-    push: inside-if0 
-  - match: '^\s*(#)\s*(endif|else)' 
-    pop: true 
-  - match: .* 
-    scope: comment 
- 
+  inside-if0:
+  - match: '^\s*(#)\s*(if)\b'
+    push: inside-if0
+  - match: '^\s*(#)\s*(endif|else)'
+    pop: true
+  - match: .*
+    scope: comment
+
+  # body of a TEXT("...") string; on hitting its closing quote we don't yet know
+  # whether it's the real end (followed by ")") or an adjacent-literal
+  # continuation (possibly via macro-style backslash line-continuation), since
+  # that can only be resolved by looking at the following line - so we
+  # hand off to text-string-gap rather than trying to match across lines.
+  text-string-body:
+  - meta_scope: string.double-quote
+  - match: '{{string_esc}}|")'
+    scope: constant.character.escape
+  - match: '{{printf}}'
+    scope: keyword.control
+  - match: '(")\s*(\))'
+    captures:
+      1: punctuation.definition.string.end
+      2: comment
+    pop: true
+  - match: '"'
+    scope: punctuation.definition.string.end
+    set: text-string-gap
+  - match: '\\\s*\n'
+    scope: keyword.operator
+  - match: '$\n'
+    scope: invalid.illegal
+    pop: true
+
+  text-string-gap:
+  - match: '\\\s*\n'
+    scope: keyword.operator
+  - match: '"'
+    scope: punctuation.definition.string.begin
+    set: text-string-body
+  - match: '\)'
+    scope: comment
+    pop: true
+  - match: '\s+'
+    scope: string.double-quote
+  - match: '\S+'
+    scope: invalid.illegal
+    pop: true
+
  
   main: 
  
@@ -523,6 +548,11 @@ contexts:
     captures: 
       1: support.type.ue4 
       2: keyword.operator 
+
+  - match: \b(UE_IMPLEMENT_STRUCT)\s*(\() 
+    captures: 
+      1: support.type.ue4 
+      2: keyword.operator 
  
   - match: |- 
       (?x)    # pretty much any open parenthesis indicates a function definition/declaration (known issue: parses function pointers incorrectly) 
@@ -689,7 +719,7 @@ contexts:
     - match: '<(?!<)'
       scope: keyword.operator 
       push: template-args 
-    - match: '([>;])|[{}]'  # semi-colon limits damage of missing or misparsed < 
+    - match: '([>;])|[{}]|\n'  # semi-colon limits damage of missing or misparsed < 
       captures: 
         1: keyword.operator 
       pop: true 
