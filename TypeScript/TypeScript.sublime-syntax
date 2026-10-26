@@ -1,70 +1,160 @@
 %YAML 1.2
 ---
-name: TypeScript (wip)
+# TypeScript syntax definition (v3)
+# Generated from DESIGN_SPEC.md with all FLAG fixes applied, QUIRKs preserved, missing features added.
+#
+# FLAG fixes applied:
+#   F1  - Keyword negative-lookahead in function-decl
+#   F2  - Fixed ident variable: [A-Za-z_$][A-Za-z_$0-9]*
+#   F3  - Replaced C/UE4 scope suffixes (EXCEPT meta.preprocessor.c per Q1)
+#   F4  - Full escape sequences in double/single-quoted strings
+#   F5  - Regex trigger uses captures so whitespace is not scoped
+#   F6  - Regex groups: only valid JS/TS syntax
+#   F8  - Spread ... -> keyword.operator.spread
+#   F9  - Removed C numeric suffixes; added 0b, 0o, BigInt n, numeric separators _
+#   F10 - Dollar-suffix: whitespace not scoped as keyword.operator
+#   F11 - Removed validation. pattern entirely
+#   F12 - Removed @interface; only match interface
+#   F13 - Replaced specialisation-args with meta.generic
+#   F14 - Class body: { push class-body, pop: 2 on }
+#   F16 - Removed throws from keywords
+#   F18 - Removed extern and final from storage modifiers
+#   F19 - Import/export: no pop on newline; pop on ; with safety fallback
+#   F20 - Import * -> keyword.operator not storage.type
+#   F22 - Return-type heuristic also handles ?: for optional properties
+#   F23 - default -> keyword.control (removed from constant.language)
+#   F24 - Removed dead template-args; added generic-params with recursive <>
+#   F25 - return-type pops on lookahead (?=;) so function consumes the ; and terminates
+#   F26 - '...'/"..." strings recover at EOL so a stray quote can't swallow the file
+#   F27 - import/export blocks handle // line comments explicitly (prototype not injected)
+#   F28 - arrow trigger lives in main/function-block, NOT common (a push from common,
+#         which is prototype-reachable, disables prototype injection in what it reaches)
+#   F29 - doc-comment opener /** scoped comment (meta_scope covers begin/end tokens,
+#         so the opener needs its own comment scope to match the * and */ punctuation)
+#
+# QUIRKs preserved:
+#   Q1 - meta.preprocessor.c on import/export blocks (MANDATORY)
+#   Q2 - Dollar-suffix -> support.type (RxJS convention)
+#   Q3 - $$vars -> storage.type (framework convention)
+#   Q4 - validation. pattern OMITTED (project-specific)
+#   Q5 - TODO highlighting in comments using markup.bold
+#
+# Missing features added:
+#   M1  - Optional chaining ?.
+#   M2  - Nullish coalescing ?? and ??=
+#   M3  - Private fields #identifier
+#   M4  - infer keyword
+#   M5  - is type guard
+#   M6  - asserts type predicate
+#   M10 - import type / export type
+#   M11 - enum, namespace, module in storage type
+#   M12 - Arrow => operator
+#   M13 - Binary 0b and octal 0o literals
+#   M14 - BigInt n suffix
+#   M15 - Numeric separators _
+#   M16 - using in control flow keywords
+#   M21 - const/let/var arrow-function name -> entity.name.function (single-line, =>-confirmed)
 
+name: TypeScript (Claude v3)
 scope: source.ts
-extensions: ["ts"]
+file_extensions: ["ts"]
+
 variables:
-  ident: '[A-Za-z_$]+[A-Za-z_0-9]*'
+  # F2 fix: $ in second character class, single-char first class
+  ident: '[A-Za-z_$][A-Za-z_$0-9]*'
   hex_digit: '[0-9a-fA-F]'
-  operators_no_brackets: '\-+/*<>.^&|%!=~:,?;'  
+  operators_no_brackets: '\-+/*<>.^&|%!=~:,?;'
   operator: '[{{operators_no_brackets}}\[\]()]'
-  begin: '(?<=\s|^|{{operator}}|[{}])' # tried to put \s* on the front to fix int x(3); init
+  begin: '(?<=\s|^|{{operator}}|[{}])'
   end: '(?=\s|$|{{operator}}|[{}])'
+  # F1 fix: keywords to exclude from function-decl matching
+  control_keywords: 'if|else|for|while|do|switch|case|break|continue|return|throw|try|catch|finally|with|yield|await|delete|new|in|of|typeof|instanceof|void'
+
 contexts:
+
+  ##############################################################################
+  # Prototype (always active) - section 4
+  ##############################################################################
   prototype:
-    - match: //
-      push:
-      - meta_scope: comment
-      - match: '(?i)@?todo'
-        scope: meta.preprocessor.c.ue4
-      - match: '$|\n'
-        pop: true
 
-    - match: /\*\*/
+    # 4.1 Single-line comments
+    - match: '//'
+      push:
+        - meta_scope: comment
+        # Q5: TODO highlighting preserved with markup.bold scope
+        - match: '(?i)@?todo'
+          scope: markup.bold
+        - match: '$\n?'
+          pop: true
+
+    # 4.2 Empty doc comment (must come before 4.3 doc and 4.4 block)
+    - match: '/\*\*/'
       scope: comment
 
-    - match: /\*\*(?!/)
+    # 4.3 Doc comments (must come before 4.4 block comments)
+    # F29: scope the opening /** as comment (like the * continuation and */ close).
+    # meta_scope covers the begin/end tokens too, so without this the /** carries
+    # only meta.preprocessor.c (the doc-string highlight) and looks unlike the rest
+    # of the comment punctuation.
+    - match: '/\*\*(?!/)'
       scope: comment
       push:
-      - meta_scope: meta.preprocessor.c
-      - match: '(?i)@?todo'
-        scope: support.type.ue4
-      - match: '^\s*(\*)\s*(?!/)(@{{ident}})?'
-        captures:
-          1: comment
-          2: support.type.ue4
-      - match: \*/
-        scope: comment
-        pop: true
+        # Q1: meta.preprocessor.c is used on doc comments per original design
+        - meta_scope: meta.preprocessor.c
+        # Q5: TODO highlighting preserved
+        - match: '(?i)@?todo'
+          scope: markup.bold
+        - match: '^\s*(\*)\s*(?!/)(@{{ident}})?'
+          captures:
+            1: comment
+            # F3 fix: support.type instead of support.type.ue4
+            2: support.type
+        - match: '\*/'
+          scope: comment
+          pop: true
 
-    - match: /\*
+    # 4.4 Block comments
+    - match: '/\*'
       push:
-      - meta_scope: comment
-      - match: '(?i)@?todo'
-        scope: meta.preprocessor.c.ue4
-      - match: \*/
-        pop: true
+        - meta_scope: comment
+        # Q5: TODO highlighting preserved
+        - match: '(?i)@?todo'
+          scope: markup.bold
+        - match: '\*/'
+          pop: true
 
+    # 4.5 Double-quoted strings
+    # F4 fix: full escape sequences including \t, \0, \f, \v, \xNN, \uNNNN, \u{NNNN}
     - match: '"'
       scope: punctuation.definition.string.begin
       push:
         - meta_scope: string.double-quote
-        - match: '\\[\\"bnr]'
+        - match: '\\(?:[\\"/bnrtfv0]|x{{hex_digit}}{2}|u{{hex_digit}}{4}|u\{{{hex_digit}}+\})'
           scope: constant.character.escape
         - match: '"'
           pop: true
+        # F26: a "..." cannot span a raw newline — recover at end of line so a
+        # stray/unterminated quote can't swallow the rest of the file.
+        - match: '$'
+          pop: true
 
+    # 4.6 Single-quoted strings
+    # F4 fix: full escape sequences
     - match: ''''
       push:
         - meta_scope: string.single-quote
-        - match: '\\[\\''bnr]'
+        - match: '\\(?:[\\''bnrtfv0/]|x{{hex_digit}}{2}|u{{hex_digit}}{4}|u\{{{hex_digit}}+\})'
           scope: constant.character.escape
         - match: ''''
           pop: true
+        # F26: a '...' cannot span a raw newline — recover at end of line so a
+        # stray/unterminated quote can't swallow the rest of the file.
+        - match: '$'
+          pop: true
 
+    # 4.7 Template strings (backtick)
     - match: '`'
-      scope: punctuation.definition.string.template.begin.js
+      scope: punctuation.definition.string.template.begin
       push: template-string
 
     - match: '(?<=[{{operators_no_brackets}}(\[]|return|throw|case|^)\s*/(?![/*])'
@@ -91,125 +181,146 @@ contexts:
         scope: invalid.illegal 
         pop: true 
 
-    - match: '(?<!\.)\.{3}(?!\.)'
-      scope: storage.type
+    # 4.9 Spread/rest operator
+    # F8 fix: keyword.operator.spread instead of storage.type
+    - match: '(?<!\.)\.\.\.(?!\.)'
+      scope: keyword.operator.spread
 
-    - match: '{{begin}}-?(\.\d+|\d+\.?\d*)([Ee]\d+)?[Uu]?[FfLl]?{{end}}'
-      scope: constant.numeric.c
-    - match: '{{begin}}-?0[xX]({{hex_digit}}+\.?{{hex_digit}}*|\.{{hex_digit}}+)([Pp]\d+)?[Uu]?[FfLl]*{{end}}'
-      scope: constant.numeric.c
+    # 4.10-4.11 Numeric literals
+    # F9 fix: removed C suffixes; added binary/octal (M13), BigInt n (M14), numeric separators _ (M15)
 
-    - match: '(\s*|\.)({{ident}}\$)'
-      captures:
-        1: keyword.operator
-        2: support.type
+    # M13: Binary literals
+    - match: '{{begin}}0[bB][01](?:[01_]*[01])?n?{{end}}'
+      scope: constant.numeric
+
+    # M13: Octal literals
+    - match: '{{begin}}0[oO][0-7](?:[0-7_]*[0-7])?n?{{end}}'
+      scope: constant.numeric
+
+    # Hexadecimal literals (no C99 Pp exponent)
+    - match: '{{begin}}0[xX]{{hex_digit}}(?:[{{hex_digit}}_]*{{hex_digit}})?n?{{end}}'
+      scope: constant.numeric
+
+    # Decimal literals with optional BigInt n suffix, exponent, numeric separators
+    - match: '{{begin}}-?(?:(?:[0-9](?:[0-9_]*[0-9])?)(?:\.(?:[0-9](?:[0-9_]*[0-9])?))?(?:[eE][+-]?(?:[0-9](?:[0-9_]*[0-9])?))?|\.(?:[0-9](?:[0-9_]*[0-9])?)(?:[eE][+-]?(?:[0-9](?:[0-9_]*[0-9]))?)?)n?{{end}}'
+      scope: constant.numeric
+
+    # 4.12 Dollar-suffixed identifiers
+    # F10 fix: whitespace no longer gets keyword.operator scope
+    # Q2 preserved: dollar-suffix -> support.type
+    - match: '(?<=\.)({{ident}}\$)'
+      scope: support.type
+    - match: '(?<=\s|^)({{ident}}\$){{end}}'
       scope: support.type
 
+  ##############################################################################
+  # String content (shared escape handling) - section 5.2
+  ##############################################################################
   string-content:
-    - match: \\\s*\n
-      scope: constant.character.escape.newline.js
-    - match: '\\(x[\da-fA-F][\da-fA-F]|u[\da-fA-F][\da-fA-F][\da-fA-F][\da-fA-F]|.)'
-      scope: constant.character.escape.js
+    - match: '\\\n'
+      scope: constant.character.escape.newline
+    - match: '\\(?:x{{hex_digit}}{2}|u{{hex_digit}}{4}|u\{{{hex_digit}}+\}|.)'
+      scope: constant.character.escape
 
+  ##############################################################################
+  # Template strings - section 5.1
+  ##############################################################################
   template-string:
     - meta_include_prototype: false
-    - meta_scope: string.template.js
+    - meta_scope: string.template
     - match: '`'
-      scope: punctuation.definition.string.template.end.js
+      scope: punctuation.definition.string.template.end
       pop: true
+    # section 12.4: ${ and } must have explicit punctuation scopes
     - match: '\$\{'
-      scope: punctuation.definition.template-expression.begin.js
+      scope: punctuation.definition.template-expression.begin
       push:
         - clear_scopes: 1
-        - meta_scope: meta.template.expression.js
-        - meta_content_scope: source.js.embedded.expression
+        - meta_scope: meta.template.expression
+        - meta_content_scope: source.ts.embedded.expression
         - match: '\}'
-          scope: punctuation.definition.template-expression.end.js
+          scope: punctuation.definition.template-expression.end
           pop: true
         - match: '`'
-          scope: punctuation.definition.string.template.begin.js
+          scope: punctuation.definition.string.template.begin
           push: template-string
         - include: common
     - include: string-content
 
+  ##############################################################################
+  # Main context - section 6
+  ##############################################################################
   main:
 
-    - match: '\s*(@{{ident}}(?:\.{{ident}})*)\s*(\()'
+    # 6.1 Decorators with parens
+    - match: '(@{{ident}}(?:\.{{ident}})*)(\()'
       captures:
         1: support.type.decorator
         2: keyword.operator
       push: decorator
 
-    - match: '(?:^|(?<=export|declare))\s*(const|let|var)\s+({{ident}})\s*:[^=]*=\s*validation\.'
-      captures:
-        1: storage.type
-        2: entity.name.function
+    # F11 fix: validation. pattern removed entirely (Q4: project-specific, omitted)
 
-    - match: '(?:^|(?<=export|declare))\s*(enum)(\s+{{ident}})'
+    # 6.3 Enum declarations
+    - match: '(?:^|(?<=export|declare))\s*(enum)\s+({{ident}})'
       captures:
         1: storage.type
-        2: entity.name.type.js
+        2: entity.name.type
       push: enum
 
-    - match: '(?:^|(?<=export|declare))\s*(type)\s+({{ident}})\s*(=)'
+    # 6.4 Type alias declarations
+    - match: '(?:^|(?<=export|declare))\s*(type)\s+({{ident}})'
       captures:
         1: storage.type
-        2: entity.name.type.js
-        3: keyword.operator
+        2: entity.name.type
+      push:
+        - match: '='
+          scope: keyword.operator
+          pop: true
+        - match: '(?=[{;])'
+          pop: true
+        - include: common
 
-    - comment: "todo: generics"
-      match: '(?:^|(?<=export|declare))\s*(abstract\s+)?(class|@?interface)\s+({{ident}})'
+    # 6.5 Class / Interface declarations
+    # F12 fix: removed @interface; only match interface
+    # F14 fix: push class-body on {, pop: 2 on }
+    - match: '(?:^|(?<=export|declare))\s*(?:(abstract)\s+)?(class|interface)\s+({{ident}})'
       captures:
         1: storage.type
         2: storage.type
-        3: entity.name.type.js
-      push:
-        - meta_scope: meta.class-struct-block.js
-        - match: '<'
-          scope: keyword.operator
-          push:
-            - meta_scope: specialisation-args
-            - match: '>'
-              scope: keyword.operator
-              pop: true
-            - include: common
-        - match: '\b(extends|implements)\s+(?:({{ident}})(\.))*({{ident}})'
-          captures:
-            1: keyword.operator
-            2: entity.other.inherited-class
-            3: keyword.operator
-            4: entity.other.inherited-class
-        - match: '(\s*{{ident}})?(;)\s*'
-          scope: invalid.illegal.redundant-semicolon
-          captures:
-            1: variable
-            2: keyword.operator
-          pop: true
-        - match: '(?<=})\s*$'
-          pop: true
+        3: entity.name.type
+      push: class-declaration
 
-        - include: $top_level_main
-
-    - match: '{'
+    # 6.6 Bare blocks
+    - match: '\{'
       push:
-        - meta_scope: meta.block.js
-        - match: '}'
+        - meta_scope: meta.block
+        - match: '\}'
           pop: true
         - include: $top_level_main
 
+    # 6.7 Function declarations
+    # F1 fix: negative lookahead excludes control flow keywords
     - include: function-decl
 
+    # M21: arrow-function detection (here, not in common — see arrow-decl)
+    - include: arrow-decl
+
+    # common
     - include: common
 
+  ##############################################################################
+  # Function-decl - section 6.7
+  # F1 fix: negative lookahead for control keywords
+  ##############################################################################
   function-decl:
     - match: |-
-        (?x)    # pretty much any open parenthesis indicates a function definition/declaration
-        {{begin}}(
-          {{ident}}
-        )\s*
-        (?: # 3    4   5
-          \s*(<)([^>]*)(>)\s*
-        )?(\()(?![&*])
+        (?x)
+        {{begin}}
+        (?!(?:{{control_keywords}})\b)
+        ({{ident}})\s*
+        (?:\s*(<)([^>]*)(>)\s*)?
+        (\()(?![&*])
       captures:
         1: entity.name.function
         2: keyword.operator
@@ -218,144 +329,336 @@ contexts:
         5: keyword.operator
       push: [function, function-args]
 
-
-  function:
-    - meta_scope: meta.function.c
-    - match: '(?<=});\s*'
-      scope: invalid.illegal.redundant-semicolon
-      pop: true
-    - match: ';|(?<=})'
+  ##############################################################################
+  # Class declaration - section 6.5
+  ##############################################################################
+  class-declaration:
+    - meta_scope: meta.class
+    # F13/F24 fix: generic-params with recursive <> support
+    - match: '<'
       scope: keyword.operator
-      pop: true
-    - match: ':\s*'
-      scope: keyword.operator
-      push: return-type
-    - include: common
-    - include: function-block
-
-  return-type:
-    - meta_scope: meta.return-type
-    - match: '(?=\{(?!\s*\w+\s*:))' # { not followed by "prop:" pattern = function body
-      pop: true
-    - match: '\{'  # { in a type object like { foo: string }
-      scope: keyword.operator
-      push: return-type-braces
-    - match: ';'
-      scope: keyword.operator
-      pop: true
-    - match: '{{operator}}'
-      scope: keyword.operator
-    - include: common-types
-
-  return-type-braces:
-    - match: '\{'
-      scope: keyword.operator
-      push: return-type-braces
-    - match: '\}'
-      scope: keyword.operator
-      pop: true
-    - match: '{{operator}}'
-      scope: keyword.operator
-    - include: common-types
-
-  common-types:
-    - match: \b(true|false|null|undefined|NaN)\b
-      scope: constant.language
-    - match: \b(any|unknown|never|boolean|number|string|void|type|readonly|keyof)\b
-      scope: storage.type
-    - match: '\b[A-Z0-9_]+\b'
-      scope: constant
-    - match: '\b[A-Z][A-Za-z_0-9]+'
-      scope: storage.type.js
-
-  function-block:
-  - match: '{'
-    push:
-    - meta_scope: meta.block.js.in-function
-    - match: '}'
-      pop: true
-
-    - match: 'default:'
-      scope: keyword.control
-
-    - include: function-block
-    - include: common
-
-  enum:
-    - meta_scope: meta.enum
-    - match: '(?<=})'
-      pop: true
-    - include: enum-block
-    - include: common
-
-  enum-block:
-    - match: '{'
-      push:
-        - meta_scope: meta.enum-block
-        - match: '{'
-          push:
-          - include: $top_level_main
-          - match: '}'
-            pop: true
-
-        - match: '(?:})|(;)'
-          captures: { 1: keyword.operator }
-          pop: true
-        - match: '{{ident}}'
-          scope: constant
-        - match: '{{operator}}'
-          scope: keyword.operator
-
-  function-args:
-    - meta_scope: meta.parens.c
-    - match: \)
-      scope: keyword.operator
-      pop: true
-    - include: common
-
-  template-args:
-    - meta_scope: meta.template-args
-    - match: <
-      scope: keyword.operator
-      push: template-args
-    - match: '([>;])|[{}]'  # semi-colon limits damage of missing or misparsed <
+      push: generic-params
+    # extends / implements clauses
+    - match: '\b(extends|implements)\s+(?:({{ident}})(\.))*({{ident}})'
       captures:
         1: keyword.operator
+        2: entity.other.inherited-class
+        3: keyword.operator
+        4: entity.other.inherited-class
+    # Redundant semicolon before body
+    - match: '(\s*{{ident}})?(;)\s*'
+      scope: invalid.illegal.redundant-semicolon
+      captures:
+        1: variable
+        2: keyword.operator
+      pop: true
+    # F14 fix: push class-body on {, pop: 2 on } so class ends cleanly
+    - match: '\{'
+      push: class-body
+    - include: $top_level_main
+
+  ##############################################################################
+  # Class body - section 6.5 (F14 fix)
+  ##############################################################################
+  class-body:
+    - meta_scope: meta.class
+    - match: '\}'
+      pop: 2
+    - include: $top_level_main
+
+  ##############################################################################
+  # Generic params (recursive <> matching) - F24 fix, F13 fix
+  ##############################################################################
+  generic-params:
+    - meta_scope: meta.generic
+    - match: '<'
+      scope: keyword.operator
+      push: generic-params
+    - match: '>'
+      scope: keyword.operator
+      pop: true
+    # Damage-limiting: semicolons and braces pop to prevent runaway
+    - match: '(?=[;{}])'
       pop: true
     - include: common
 
-  decorator:
-    - meta_scope: meta.decorator
-    - match: '\('
-      scope: keyword.operator
-      push: decorator
+  ##############################################################################
+  # Function args - section 8.1
+  ##############################################################################
+  function-args:
+    - meta_scope: meta.parens
     - match: '\)'
       scope: keyword.operator
       pop: true
     - include: common
 
-
-  common:
-    - match: \b(true|false|null|undefined|NaN|default)\b
-      scope: constant.language
-    - match: (?<!\.)\b(extends|implements|satisfies|instanceof|throws|typeof)\b
+  ##############################################################################
+  # Function - section 8.2
+  ##############################################################################
+  function:
+    - meta_scope: meta.function
+    # section 12.1: } was consumed by function-block, must use lookbehind
+    - match: '(?<=\});\s*'
+      scope: invalid.illegal.redundant-semicolon
+      pop: true
+    # section 12.1: lookbehind for } consumed by function-block
+    - match: ';|(?<=\})'
       scope: keyword.operator
-    - match: (?<!\.)\b(as|async|await|get|set|break|case|catch|continue|do|else|finally|for|goto|if|in|new|delete|of|return|switch|throw|try|while|yield)\b
+      pop: true
+    - match: ':'
+      scope: keyword.operator
+      push: return-type
+    - include: common
+    - include: function-block
+
+  ##############################################################################
+  # Return type - section 8.3
+  # F22 fix: heuristic also handles ?: for optional properties
+  ##############################################################################
+  return-type:
+    - meta_scope: meta.return-type
+    # F22 fix: pop when { is NOT followed by a property-like pattern
+    # (identifier then optional ? then :) indicating object type
+    - match: '(?=\{(?!\s*\w+\s*\??:))'
+      pop: true
+    # F25 fix: pop on lookahead so the enclosing `function` context consumes
+    # the `;` and terminates the declaration; otherwise it stays on the stack
+    # and the next sibling (e.g. `g()`) is parsed as a call, not a declaration.
+    - match: '(?=;)'
+      pop: true
+    # { that IS part of a type object -> push return-type-braces
+    - match: '\{'
+      scope: keyword.operator
+      push: return-type-braces
+    - match: '{{operator}}'
+      scope: keyword.operator
+    - include: common-types
+
+  ##############################################################################
+  # Return type braces - section 8.5
+  ##############################################################################
+  return-type-braces:
+    # section 12.2: pop rule before catch-all
+    - match: '\}'
+      scope: keyword.operator
+      pop: true
+    - match: '\{'
+      scope: keyword.operator
+      push: return-type-braces
+    - match: '{{operator}}'
+      scope: keyword.operator
+    - include: common-types
+
+  ##############################################################################
+  # Common types (used in return-type contexts) - section 8.4
+  ##############################################################################
+  common-types:
+    - match: '\b(?:true|false|null|undefined|NaN)\b'
+      scope: constant.language
+    # M4, M5, M6: infer, is, asserts in type contexts
+    - match: '\b(?:infer|is|asserts)\b'
+      scope: keyword.operator
+    - match: '\b(?:any|unknown|never|boolean|number|string|void|type|readonly|keyof)\b'
+      scope: storage.type
+    - match: '\b[A-Z0-9_]+\b'
+      scope: constant
+    - match: '\b[A-Z][A-Za-z_0-9]+\b'
+      scope: storage.type
+
+  ##############################################################################
+  # Function block - section 8.6
+  ##############################################################################
+  function-block:
+    - match: '\{'
+      push:
+        - meta_scope: meta.block.in-function
+        # section 12.2: pop rule before any catch-all or includes
+        - match: '\}'
+          pop: true
+        # M21: arrow-function detection inside function bodies (here, not in
+        # common — see arrow-decl). function-block is NOT prototype-reachable, so
+        # including the trigger here does not disturb prototype injection.
+        - include: arrow-decl
+        # F23 fix: default as keyword.control works everywhere via common
+        - include: function-block
+        - include: common
+
+  ##############################################################################
+  # M21: Arrow-function const/let/var
+  #
+  # The TRIGGER (`arrow-decl`) is included by `main` and `function-block` only —
+  # deliberately NOT by `common`. `common` is reachable from the prototype (via
+  # template ${}), and Sublime does not inject the prototype into any context it
+  # can reach; a `push` from `common` would therefore pull arrow-value/arrow-body
+  # AND the shared function-block/function-args out of prototype injection,
+  # silently killing their comments/strings/numbers. `main` and `function-block`
+  # are NOT prototype-reachable, so triggering from there keeps everything intact.
+  #
+  # arrow-value/arrow-body: scope the name (entity.name.function), handle the
+  # `= (params) =>` head, then route the body. The body parses via `common`
+  # (NOT main/function-decl), so an unbraced body like `() => call(x)` keeps
+  # `call` as support.function — it is never treated as a definition site.
+  ##############################################################################
+  arrow-decl:
+    # Only fires when a `=>` is confirmed on this line (lookahead) — avoids false
+    # positives on `const f = (a, b)` comma/paren expressions, which a prefix
+    # match could not retract. Multi-line param lists are NOT matched (a match
+    # can't cross a newline) — accepted limitation.
+    - match: |-
+        (?x)
+        {{begin}}(const|let|var)\s+({{ident}})\b
+        (?=
+          \s*(?::[^=;]+)?
+          =\s*(?:async\s+)?
+          (?:
+            {{ident}}\s*=>
+            |
+            \([^)]*\)\s*(?::[^=>]+)?=>
+          )
+        )
+      captures:
+        1: storage.type
+        2: entity.name.function
+      push: arrow-value
+
+  arrow-value:
+    - meta_scope: meta.function
+    # Backstop: the trigger's lookahead guarantees the `=>` is on this line, so
+    # we never legitimately reach EOL here — but pop if we somehow do.
+    - match: '$'
+      pop: true
+    - match: '=>'
+      scope: keyword.operator
+      set: arrow-body
+    # Parameter list — reuse function-args (meta.parens, pops on `)`).
+    - match: '\('
+      scope: keyword.operator
+      push: function-args
+    # `=`, `:` binding type, async, bare single-ident param, return type.
+    - include: common
+
+  arrow-body:
+    - meta_scope: meta.function
+    # Braced body: function-block matches `{`, balances nesting, pops on its `}`.
+    - include: function-block
+    # ...after which we are done.
+    - match: '(?<=\})'
+      pop: true
+    # Unbraced expression body ends at `;` (consumed), an enclosing `}` (kept for
+    # the parent), or EOL. Nested (), [], commas, and calls stay in the body via
+    # common. NOTE: a multi-line unbraced body pops at the first EOL (limitation).
+    - match: ';'
+      scope: keyword.operator
+      pop: true
+    - match: '(?=\})'
+      pop: true
+    - match: '$'
+      pop: true
+    - include: common
+
+  ##############################################################################
+  # Enum - section 9.1
+  ##############################################################################
+  enum:
+    - meta_scope: meta.enum
+    # section 12.1: } was consumed by enum-block, must use lookbehind
+    - match: '(?<=\})'
+      pop: true
+    - include: enum-block
+    - include: common
+
+  ##############################################################################
+  # Enum block - section 9.1
+  ##############################################################################
+  enum-block:
+    - match: '\{'
+      push:
+        - meta_scope: meta.enum-block
+        # section 12.2: pop/terminator rules MUST come before catch-alls
+        - match: '\}'
+          pop: true
+        - match: ';'
+          scope: keyword.operator
+          pop: true
+        # Nested {} for computed values
+        - match: '\{'
+          push:
+            - match: '\}'
+              pop: true
+            - include: $top_level_main
+        - match: '{{ident}}'
+          scope: constant
+        - match: '{{operator}}'
+          scope: keyword.operator
+
+  ##############################################################################
+  # Decorator - section 9.2
+  ##############################################################################
+  decorator:
+    - meta_scope: meta.decorator
+    # section 12.2: pop rule before push rule
+    - match: '\)'
+      scope: keyword.operator
+      pop: true
+    - match: '\('
+      scope: keyword.operator
+      push: decorator
+    - include: common
+
+  ##############################################################################
+  # Common (expression-level) - section 7
+  ##############################################################################
+  common:
+
+    # 7.1 Language constants
+    # F23 fix: default removed from constant.language, moved to keyword.control
+    - match: '\b(?:true|false|null|undefined|NaN)\b'
+      scope: constant.language
+
+    # 7.2 Type/operator keywords
+    # F16 fix: removed throws (not a TS keyword)
+    - match: '(?<!\.)\b(?:extends|implements|satisfies|instanceof|typeof)\b'
+      scope: keyword.operator
+
+    # 7.3 Control flow keywords
+    # F23 fix: default added here
+    # M16: using added
+    # F17: goto kept (it IS a reserved word)
+    - match: '(?<!\.)\b(?:as|async|await|get|set|break|case|catch|continue|default|do|else|finally|for|goto|if|in|new|delete|of|return|switch|throw|try|while|yield|using)\b'
       scope: keyword.control
-    - match: (?<!\.)\b(extern|final|private|protected|public|static|abstract|override)\b
+
+    # 7.4 Storage modifiers
+    # F18 fix: removed extern and final (not TS keywords)
+    # M20: added accessor (ES2024 auto-accessor)
+    - match: '(?<!\.)\b(?:private|protected|public|static|abstract|override|accessor)\b'
       scope: storage.modifier
 
-    - match: \b(declare|class|interface|function|any|unknown|never|boolean|number|string|void|type|const|readonly|keyof|let|var)\b
-      scope: storage.type
-    - match: \b(this|super)\b
-      scope: variable.language.js
+    # M21: arrow-function detection lives in `arrow-decl`, included by `main` and
+    # `function-block` — NOT here. `common` is reachable from the prototype (via
+    # template ${}), so a `push` here would drag the pushed subtree out of
+    # prototype injection (this exact mistake broke in-function comments once).
 
+    # 7.5 Storage type keywords
+    # M11: added enum, namespace, module
+    - match: '(?<!\.)\b(?:declare|class|interface|function|any|unknown|never|boolean|number|string|void|type|const|readonly|keyof|let|var|enum|namespace|module)\b'
+      scope: storage.type
+
+    # M4, M5, M6: infer, is, asserts (in both common and common-types)
+    - match: '(?<!\.)\b(?:infer|is|asserts)\b'
+      scope: storage.type
+
+    # 7.6 Language variables
+    - match: '\b(?:this|super)\b'
+      scope: variable.language
+
+    # 7.7 All-caps constants (MUST come before 7.15 PascalCase types)
     - match: '\b[A-Z0-9_]+\b'
       scope: constant
 
+    # 7.8 Function calls
     - match: |-
         (?x)
-        (?<=\s|^|{{operator}})({{ident}})
+        {{begin}}({{ident}})
           (?:
           \s*(<)([^>]*)(>)\s*
          )?(\()
@@ -363,79 +666,150 @@ contexts:
         1: support.function
         2: keyword.operator
         3: storage.type
-        4: keyword.operator # close angle bracket
-        5: keyword.operator # open paren
+        4: keyword.operator
+        5: keyword.operator
 
-    - match: '(?<=[\w)]\.)([a-z_$][A-Za-z_0-9]*)(?!\()'
+    # 7.9 Property access
+    - match: '(?<=[\w)\]]\.)([a-z_$][A-Za-z_$0-9]*)(?!\s*\()'
       scope: variable
 
-    - match: '{{operator}}'
-      scope: keyword.operator
+    # M3: Private fields
+    - match: '#{{ident}}'
+      scope: variable.other.property
 
-    - match: '^\s*(export)\s*({)\s*\b'
+    # 7.11 Export blocks (MUST come before 7.12 standalone export)
+    # Q1 MANDATORY: meta_scope must be exactly meta.preprocessor.c
+    # F19 fix: no pop on newline - pop on } or ;
+    - match: '^\s*(export)\s*(\{)'
       captures:
         1: keyword.control.export
-        2: keyword.control.operator
+        2: keyword.operator
       push:
         - meta_scope: meta.preprocessor.c
-        - match: /\*
+        # section 12.2: pop rules before catch-alls
+        - match: '\}'
+          scope: keyword.operator
+          pop: true
+        - match: ';'
+          scope: keyword.operator
+          pop: true
+        # F19 fix: safety fallback - lookahead for next statement-starting keyword at line start
+        - match: '(?=^\s*(?:import|export|class|interface|enum|type|function|const|let|var|declare|abstract)\b)'
+          pop: true
+        - match: '/\*'
           push:
             - meta_scope: comment
-            - match: \*/
+            - match: '\*/'
               pop: true
-        - match: '[{}]'
+        # F27: line comments handled explicitly (see import block §7.13)
+        - match: '//'
+          push:
+            - meta_scope: comment
+            - match: '(?i)@?todo'
+              scope: markup.bold
+            - match: '$\n?'
+              pop: true
+        # M10: type, as — keyword.operator inside meta.preprocessor.c per Q1
+        - match: '\b(?:type|as)\b'
           scope: keyword.operator
-        - match: ;
+        - match: ','
           scope: keyword.operator
-          pop: true
-        - match: \n
-          pop: true
 
-    - match: \b(export|declare)\b
+    # 7.12 Export / Declare (standalone)
+    - match: '(?<!\.)\b(?:export|declare)\b'
       scope: keyword.control.import
 
+    # 7.13 Import statements
+    # Q1 MANDATORY: meta_scope must be exactly meta.preprocessor.c
+    # F19 fix: no pop on newline - pop on ; with safety fallback
+    # F20 fix: * as keyword.operator not storage.type
     - match: '^\s*import\b'
       scope: keyword.control.import
       push:
         - meta_scope: meta.preprocessor.c
-        - match: /\*
+        - match: '/\*'
           push:
             - meta_scope: comment
-            - match: \*/
+            - match: '\*/'
               pop: true
-
+        # F27: line comments — the prototype's // rule isn't injected here (this
+        # block re-implements comments/strings itself), so handle // explicitly.
+        # Result is `meta.preprocessor.c comment`, as expected inside an import.
+        - match: '//'
+          push:
+            - meta_scope: comment
+            - match: '(?i)@?todo'
+              scope: markup.bold
+            - match: '$\n?'
+              pop: true
+        # Inline double-quoted strings - F4: full escapes
         - match: '"'
           scope: punctuation.definition.string.begin
           push:
             - meta_scope: string.double-quote
-            - match: '\\[\\"bnr]'
+            - match: '\\(?:[\\"/bnrtfv0]|x{{hex_digit}}{2}|u{{hex_digit}}{4}|u\{{{hex_digit}}+\})'
               scope: constant.character.escape
             - match: '"'
               pop: true
-
+            # F26: recover at EOL (see §4.5)
+            - match: '$'
+              pop: true
+        # Inline single-quoted strings - F4: full escapes
         - match: ''''
           push:
             - meta_scope: string.single-quote
-            - match: '\\[\\''bnr]'
+            - match: '\\(?:[\\''bnrtfv0/]|x{{hex_digit}}{2}|u{{hex_digit}}{4}|u\{{{hex_digit}}+\})'
               scope: constant.character.escape
             - match: ''''
               pop: true
-
-        - match: \b(from|as|require)\b|[={}()]
-          scope: keyword.operator
-        - match: \*
-          scope: storage.type
-        - match: ;
+            # F26: recover at EOL (see §4.6)
+            - match: '$'
+              pop: true
+        # Pop on semicolon
+        - match: ';'
           scope: keyword.operator
           pop: true
-        - match: \n
+        # F19 fix: safety fallback - lookahead for next statement-starting keyword at line start
+        - match: '(?=^\s*(?:import|export|class|interface|enum|type|function|const|let|var|declare|abstract)\b)'
           pop: true
+        # M10: type, from, as, require — keyword.operator inside meta.preprocessor.c per Q1
+        - match: '\b(?:type|from|as|require)\b'
+          scope: keyword.operator
+        # F20 fix: * as keyword.operator (along with other delimiters)
+        - match: '[={}()*]'
+          scope: keyword.operator
 
+    # 7.14 Bare decorators
     - match: '@{{ident}}'
       scope: support.type.decorator
 
-    - match: '\b[A-Z][A-Za-z_0-9]+'
-      scope: storage.type.js
+    # section 12.5: Multi-character operators MUST come before the single-character catch-all
 
-    - match: '(?<![A-Za-z_0-9])\$\$[A-Za-z_0-9]*'
-      scope: storage.type.js
+    # M1: Optional chaining (?. but not before digit - that would be ternary + decimal)
+    - match: '\?\.(?!\d)'
+      scope: keyword.operator
+
+    # M2: Nullish coalescing assignment (longest match first)
+    - match: '\?\?='
+      scope: keyword.operator
+
+    # M2: Nullish coalescing
+    - match: '\?\?'
+      scope: keyword.operator
+
+    # M12: Arrow function =>
+    - match: '=>'
+      scope: keyword.operator
+
+    # 7.15 PascalCase type names (MUST come after 7.7 all-caps constants)
+    - match: '\b[A-Z][A-Za-z_0-9]+\b'
+      scope: storage.type
+
+    # 7.16 Double-dollar identifiers
+    # Q3 preserved: $$vars -> storage.type
+    - match: '(?<![A-Za-z0-9_])\$\$[A-Za-z0-9_]*'
+      scope: storage.type
+
+    # 7.10 Operators (catch-all) - MUST come last after all specific operators and patterns
+    - match: '{{operator}}'
+      scope: keyword.operator
