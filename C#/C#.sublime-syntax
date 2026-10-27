@@ -1,0 +1,511 @@
+%YAML 1.2
+---
+# =====================================================================
+# C# — Sublime syntax
+# Built from c-like-skeleton.sublime-syntax / c-like-sublime-syntax-design.md.
+# Section refs (§N) point at the design doc.
+#
+# Per-language decisions (§11 checklist):
+#   • Comments: // line, /* */ block, /// + /** */ XML doc. No nesting.
+#   • Strings: "…", '…' char, @"…" verbatim ("" escape, multi-line),
+#       $"…" interpolated, $@" / @$" verbatim-interpolated, """…""" raw (C#11).
+#   • Numbers: 0x hex, 0b binary, decimal/float; _ separators; fFdDmMuUlL suffixes.
+#   • Types: PascalCase ⇒ storage.type. Generics <> fall to the operator catch-all.
+#   • No regex literals (C# has none) — that prototype block is omitted.
+#
+# §8.8 guard (the expensive one): `common` PUSHES NOTHING — the call rule uses a
+# (?=\() look-ahead instead of consuming '(', so the only contexts reachable from
+# `prototype` are {literal contexts, interpolation, common}. function-block /
+# function-args / main / block etc. are therefore NOT in that set and keep full
+# prototype injection (strings, comments, numbers work inside bodies & params).
+# Re-verify after structural edits: nothing common pushes may be a shared body ctx.
+#
+# Limits (§9 [LIMIT]):
+#   • Nested strings/numbers inside ${…} interpolation are not highlighted
+#     (interpolation is prototype-reachable, so it gets no prototype injection).
+#   • Generic method names (Foo<T>(…)) scope as types, not entity.name.function.
+#   • Raw-string interpolation uses single { } (real C# matches brace count to $).
+# =====================================================================
+
+name: C# (Claude v1) 
+scope: source.cs
+file_extensions: [cs, csx, cake]
+
+variables:
+  ident: '[A-Za-z_][A-Za-z_0-9]*'
+  hex_digit: '[0-9a-fA-F]'
+  operators_no_brackets: '\-+/*<>.^&|%!=~:,?;'
+  operator: '[{{operators_no_brackets}}\[\]()]'
+  begin: '(?<=\s|^|{{operator}}|[{}])'   # left identifier boundary
+  end: '(?=\s|$|{{operator}}|[{}])'      # right identifier boundary
+  # §8.11 — keywords/operator-words excluded from function-decl's name match, so
+  # `if (`, `using (`, `nameof(`, `new(`, … are never read as declarations.
+  control_keywords: 'if|else|for|foreach|while|do|switch|case|default|break|continue|return|throw|try|catch|finally|goto|yield|lock|using|fixed|checked|unchecked|when|where|new|await|typeof|sizeof|nameof|stackalloc|is|as|in|out|ref'
+
+contexts:
+
+  # ===================================================================
+  # prototype — always-on lexical layer (§5.1). ORDER MATTERS.
+  # ===================================================================
+  prototype:
+    # --- comments: most-specific opener first (§5.1, §8.2) ---
+    - match: '///'
+      scope: punctuation.definition.comment
+      push: doc-comment
+    - match: '/\*\*(?!/)'
+      scope: punctuation.definition.comment
+      push: block-doc-comment
+    - match: '/\*'
+      scope: punctuation.definition.comment
+      push: block-comment
+    - match: '//'
+      scope: punctuation.definition.comment
+      push: line-comment
+
+    # --- preprocessor directives (line-bounded, no prototype inside) ---
+    - match: '^\s*(#)\s*(if|elif|else|endif|define|undef|warning|error|line|region|endregion|pragma|nullable)\b'
+      captures:
+        1: punctuation.definition.keyword
+        2: keyword.control.preprocessor
+      push: preprocessor
+
+    # --- strings: most-specific prefix FIRST (§5.1) ---
+    - match: '\$@"|@\$"'
+      scope: punctuation.definition.string.begin
+      push: verbatim-interpolated-string
+    - match: '@"'
+      scope: punctuation.definition.string.begin
+      push: verbatim-string
+    - match: '\$"""'
+      scope: punctuation.definition.string.begin
+      push: raw-interpolated-string
+    - match: '"""'
+      scope: punctuation.definition.string.begin
+      push: raw-string
+    - match: '\$"'
+      scope: punctuation.definition.string.begin
+      push: interpolated-string
+    - match: '"'
+      scope: punctuation.definition.string.begin
+      push: dq-string
+    - match: ''''
+      scope: punctuation.definition.string.begin
+      push: char
+
+    # --- numbers: most-specific base FIRST (§5.1) ---
+    - match: '{{begin}}0[xX]{{hex_digit}}(?:[0-9a-fA-F_]*{{hex_digit}})?(?:[uUlL]+)?{{end}}'
+      scope: constant.numeric.hex
+    - match: '{{begin}}0[bB][01](?:[01_]*[01])?(?:[uUlL]+)?{{end}}'
+      scope: constant.numeric.binary
+    - match: '{{begin}}\.[0-9](?:[0-9_]*[0-9])?(?:[eE][+-]?[0-9]+)?(?:[fFdDmM])?{{end}}'
+      scope: constant.numeric.float
+    - match: '{{begin}}[0-9](?:[0-9_]*[0-9])?(?:\.[0-9](?:[0-9_]*[0-9])?)?(?:[eE][+-]?[0-9]+)?(?:[fFdDmMuUlL]+)?{{end}}'
+      scope: constant.numeric
+
+  # --- comment bodies: meta_include_prototype:false avoids runaway (§8.6) ---
+  line-comment:
+    - meta_include_prototype: false
+    - meta_scope: comment.line.double-slash
+    - match: '(?i)\b(TODO|FIXME|HACK|XXX|NOTE)\b'
+      scope: markup.bold
+    - match: '$'
+      pop: true
+  block-comment:
+    - meta_include_prototype: false
+    - meta_scope: comment.block
+    - match: '\*/'
+      scope: punctuation.definition.comment
+      pop: true
+  doc-comment:
+    - meta_include_prototype: false
+    - meta_scope: comment.block.documentation
+    - match: '</?'
+      scope: punctuation.definition.tag.begin
+      push: doc-comment-tag
+    - match: '$'
+      pop: true
+  block-doc-comment:
+    - meta_include_prototype: false
+    - meta_scope: comment.block.documentation
+    - match: '</?'
+      scope: punctuation.definition.tag.begin
+      push: doc-comment-tag
+    - match: '\*/'
+      scope: punctuation.definition.comment
+      pop: true
+  doc-comment-tag:
+    - meta_include_prototype: false
+    - meta_scope: meta.tag
+    - match: '{{ident}}'
+      scope: entity.name.tag
+    - match: '/?>'
+      scope: punctuation.definition.tag.end
+      pop: true
+    - match: '$'
+      pop: true
+
+  # --- preprocessor line (§8.6 — no prototype, EOL recovery) ---
+  preprocessor:
+    - meta_include_prototype: false
+    - meta_scope: meta.preprocessor
+    - match: '$'
+      pop: true
+
+  # ===================================================================
+  # string literals
+  # ===================================================================
+  # regular "…": false-prototype (§8.6) + EOL recovery (§8.7)
+  dq-string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.double
+    - match: '\\.'
+      scope: constant.character.escape
+    - match: '"'
+      scope: punctuation.definition.string.end
+      pop: true
+    - match: '$'
+      pop: true
+  # char '…'
+  char:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.single
+    - match: '\\.'
+      scope: constant.character.escape
+    - match: ''''
+      scope: punctuation.definition.string.end
+      pop: true
+    - match: '$'
+      pop: true
+  # verbatim @"…" — spans lines, "" is the escaped quote (NO EOL pop)
+  verbatim-string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.double
+    - match: '""'
+      scope: constant.character.escape
+    - match: '"'
+      scope: punctuation.definition.string.end
+      pop: true
+  # interpolated $"…" — single line, {{ }} literal braces, { } embeds code
+  interpolated-string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.double
+    - match: '\\.'
+      scope: constant.character.escape
+    - match: '\{\{|\}\}'
+      scope: constant.character.escape
+    - match: '\{'
+      scope: punctuation.section.interpolation.begin
+      push: interpolation
+    - match: '"'
+      scope: punctuation.definition.string.end
+      pop: true
+    - match: '$'
+      pop: true
+  # verbatim interpolated $@" / @$" — spans lines, "" escape, { } embeds code
+  verbatim-interpolated-string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.double
+    - match: '""'
+      scope: constant.character.escape
+    - match: '\{\{|\}\}'
+      scope: constant.character.escape
+    - match: '\{'
+      scope: punctuation.section.interpolation.begin
+      push: interpolation
+    - match: '"'
+      scope: punctuation.definition.string.end
+      pop: true
+  # raw """…""" — spans lines, no escapes
+  raw-string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.triple
+    - match: '"""'
+      scope: punctuation.definition.string.end
+      pop: true
+  # raw interpolated $"""…""" — [LIMIT] single-brace interpolation
+  raw-interpolated-string:
+    - meta_include_prototype: false
+    - meta_scope: string.quoted.triple
+    - match: '\{'
+      scope: punctuation.section.interpolation.begin
+      push: interpolation
+    - match: '"""'
+      scope: punctuation.definition.string.end
+      pop: true
+  # interpolation body — embedded code (KEEPS prototype semantics via common).
+  # This is the only context that makes `common` prototype-reachable; it is why
+  # common must push nothing (§8.8).
+  interpolation:
+    - meta_scope: meta.interpolation
+    - clear_scopes: 1
+    - match: '\}'
+      scope: punctuation.section.interpolation.end
+      pop: true
+    - match: ':'
+      scope: punctuation.separator
+      push: interpolation-format
+    - include: common
+  interpolation-format:
+    # the format/alignment spec after `:` is literal text up to the closing }
+    - meta_scope: string.quoted.double
+    - match: '(?=\})'
+      pop: true
+
+  # ===================================================================
+  # main — declarations (§5.2). Triggers that PUSH body/param contexts live
+  # here (and in block contexts), NEVER in common (§8.8).
+  # ===================================================================
+  main:
+    - match: '{{begin}}(namespace)\b'
+      scope: keyword.declaration.namespace
+      push: namespace-name
+    - match: '{{begin}}(using)\b(?!\s*\()'
+      scope: keyword.control.import
+      push: using-directive
+    - match: '{{begin}}(enum)\s+({{ident}})'
+      captures:
+        1: storage.type
+        2: entity.name.type
+      push: enum
+    - match: '{{begin}}(?:class|struct|interface|record)\b'
+      scope: storage.type
+      push: type-decl
+
+    # attribute [Name(...)] (§5.5) — MUST precede function-decl: otherwise the
+    # `Help(` in `[Help("…")]` matches function-decl, which pushes the function
+    # context and swallows the real `class` declaration that follows (the class
+    # name then resolves under meta.function with no entity.name.type). Only fires
+    # when `[` is followed by an (optionally target-qualified) identifier, so array
+    # types `int[]` / `int[,]` and indexers fall through to the operator catch-all.
+    - match: '\[(?=\s*(?:{{ident}}\s*:\s*)?{{ident}})'
+      scope: punctuation.section.brackets.begin
+      push: attribute
+
+    # bare block (§5.2)
+    - match: '\{'
+      scope: punctuation.section.block.begin
+      push: block
+
+    - include: function-decl
+    - include: common
+
+  block:
+    - meta_scope: meta.block
+    - match: '\}'
+      scope: punctuation.section.block.end
+      pop: true
+    - include: main          # nested declarations (class bodies, namespaces)
+
+  namespace-name:
+    - meta_scope: meta.namespace
+    - match: '{{ident}}'
+      scope: entity.name.namespace
+    - match: '\.'
+      scope: punctuation.accessor
+    - match: '(?=[{;])'      # block-scoped or file-scoped — leave the {/; (§8.1)
+      pop: true
+    - match: '$'
+      pop: true
+
+  using-directive:
+    - meta_scope: meta.using
+    - match: '{{begin}}(static|global)\b'
+      scope: storage.modifier
+    - match: '{{ident}}'
+      scope: entity.name.namespace
+    - match: '\.'
+      scope: punctuation.accessor
+    - match: '='
+      scope: keyword.operator.assignment
+    - match: ';'
+      scope: punctuation.terminator
+      pop: true
+    - match: '$'
+      pop: true
+
+  # attribute / decorator (§5.5). Not prototype-reachable (pushed from main), so it
+  # keeps prototype injection — strings inside [Foo("…")] highlight normally.
+  attribute:
+    - meta_scope: meta.annotation
+    - match: '\]'
+      scope: punctuation.section.brackets.end
+      pop: true
+    - match: '({{ident}})\s*(\()'        # attribute name with arguments
+      captures:
+        1: support.type.decorator
+        2: punctuation.section.parens.begin
+      push: attribute-args
+    - match: '{{ident}}'                  # attribute name, or a `target:` qualifier
+      scope: support.type.decorator
+    - match: '\.'
+      scope: punctuation.accessor
+    - match: '[,:]'
+      scope: punctuation.separator
+  attribute-args:
+    - meta_scope: meta.annotation.arguments
+    - match: '\)'
+      scope: punctuation.section.parens.end
+      pop: true
+    - match: '\('                         # balance nested parens
+      scope: punctuation.section.parens.begin
+      push: nested-parens
+    - include: common
+
+  type-decl:
+    - meta_scope: meta.class
+    - match: '(?=[{;])'      # leave the body brace / terminator for main (§8.1)
+      pop: true
+    - match: '{{begin}}(?:class|struct)\b'   # `record struct`, `record class`
+      scope: storage.type
+    - match: '{{ident}}'
+      scope: entity.name.type
+      set: type-decl-rest
+    - include: common
+  type-decl-rest:
+    # generic params, base list (`: Base, IFoo<T>`), where-constraints. Here a
+    # PascalCase word IS a type (base/interface/constraint), so the blanket rule is
+    # safe — unlike in `common` (see band 11 there).
+    - match: '(?=[{;])'
+      pop: true
+    - match: '{{begin}}[A-Z][A-Za-z_0-9]*{{end}}'
+      scope: entity.other.inherited-class
+    - include: common
+
+  # ===================================================================
+  # function declaration (§5.4): name + ( … ) → [function, function-args].
+  # NOTE: lives in `main` only (and never in common). Method bodies are
+  # function-block, so calls inside them get the call scope, not this one.
+  # ===================================================================
+  function-decl:
+    - match: |-
+        (?x)
+        {{begin}}
+        (?<!\.)                             # not a member access (`.Foo(` is a call)
+        (?!(?:{{control_keywords}})\b)      # §8.11 — keywords aren't declarations
+        ({{ident}})\s*
+        (\()
+      captures:
+        1: entity.name.function
+        2: punctuation.section.parens.begin
+      push: [function, function-args]
+
+  function-args:
+    - meta_scope: meta.function.parameters
+    - match: '\)'
+      scope: punctuation.section.parens.end
+      pop: true
+    - match: '\('                           # balance nested parens (default values)
+      scope: punctuation.section.parens.begin
+      push: nested-parens
+    - include: common
+  nested-parens:
+    - match: '\)'
+      scope: punctuation.section.parens.end
+      pop: true
+    - match: '\('
+      scope: punctuation.section.parens.begin
+      push: nested-parens
+    - include: common
+
+  function:
+    - meta_scope: meta.function
+    # bodyless / expression-bodied / interface method terminator
+    - match: ';'
+      scope: punctuation.terminator
+      pop: true
+    # §8.1 — pop after function-block has consumed the body's }
+    - match: '(?<=\})'
+      pop: true
+    - include: function-block               # { … } body
+    - include: common                       # =>, : base(...), where-constraints
+
+  function-block:
+    - match: '\{'
+      scope: punctuation.section.block.begin
+      push: function-block-body
+  function-block-body:
+    - meta_scope: meta.block
+    - match: '\}'
+      scope: punctuation.section.block.end
+      pop: true
+    # NO function-decl here — a name( inside a body is a call, scoped by common.
+    # function-block (nested blocks) is safe: not prototype-reachable (§8.8).
+    - include: function-block
+    - include: common
+
+  # ===================================================================
+  # enum (§5.5)
+  # ===================================================================
+  enum:
+    - meta_scope: meta.enum
+    - match: '(?<=\})'        # §8.1 — pop after enum-block consumed }
+      pop: true
+    - match: '\{'
+      scope: punctuation.section.block.begin
+      push: enum-block
+    - include: common         # `: byte` underlying-type
+  enum-block:
+    - meta_scope: meta.block
+    - match: '\}'
+      scope: punctuation.section.block.end
+      pop: true
+    - match: '{{ident}}'
+      scope: constant.other.enum
+    - match: ','
+      scope: punctuation.separator
+    - include: common         # `= 1 << 2` explicit values
+
+  # ===================================================================
+  # common — expression layer (§5.3). specific → general. PUSHES NOTHING
+  # (§8.8). Operator catch-all is ALWAYS last.
+  # ===================================================================
+  common:
+    # 1. language constants
+    - match: '{{begin}}(?:true|false|null)\b'
+      scope: constant.language
+    # 2a. `new Type` — the constructed type is a high-confidence type position.
+    #     (new() / new[] / new {…} have no type and fall through to the `new` below.)
+    - match: '{{begin}}(new)\s+({{ident}})'
+      captures:
+        1: keyword.operator.word
+        2: storage.type
+    # 2. operator-like keywords
+    - match: '(?<!\.)\b(?:as|is|in|new|typeof|sizeof|nameof|stackalloc|await|with|and|or|not)\b'
+      scope: keyword.operator.word
+    # 3. control-flow keywords
+    - match: '(?<!\.)\b(?:if|else|for|foreach|while|do|switch|case|default|break|continue|return|throw|try|catch|finally|goto|yield|lock|using|fixed|checked|unchecked|when|where)\b'
+      scope: keyword.control
+    # 4. storage modifiers
+    - match: '(?<!\.)\b(?:public|private|protected|internal|static|abstract|sealed|virtual|override|readonly|const|volatile|extern|partial|async|unsafe|ref|out|params|explicit|implicit|required|scoped|init|get|set|add|remove|file)\b'
+      scope: storage.modifier
+    # 5. storage-type keywords
+    - match: '(?<!\.)\b(?:class|struct|interface|enum|delegate|record|namespace|void|var|int|long|short|byte|sbyte|uint|ulong|ushort|bool|char|string|float|double|decimal|object|dynamic|nint|nuint)\b'
+      scope: storage.type
+    # 6. language variables
+    - match: '(?<!\.)\b(?:this|base|value)\b'
+      scope: variable.language
+    # 7. all-caps constants — BEFORE the type-name rule (§8.2)
+    - match: '{{begin}}[A-Z][A-Z0-9_]*{{end}}'
+      scope: constant.other
+    # 8. function CALLS — look-ahead only, do NOT consume `(` (§8.8 keeps common
+    #    push-free; the enclosing context handles the paren).
+    - match: '{{begin}}({{ident}})(?=\s*\()'
+      scope: variable.function
+    # 9. member / property access
+    - match: '(?<=\.)\s*({{ident}})'
+      scope: variable.other.member
+    # 10. multi-character operators BEFORE the catch-all (§8.5)
+    - match: '\?\.|\?\?=?|=>|::|->|<<=?|>>=?|<=|>=|==|!=|&&|\|\||\+\+|--|[-+*/%&|^]=|='
+      scope: keyword.operator
+    # 11. type in a declaration position — `Type name` (field / local / param /
+    #     method / property). C# uses PascalCase for MEMBERS too, so the skeleton's
+    #     blanket "PascalCase ⇒ type" mis-colours the whole file as types (v1 bug).
+    #     Restrict to the high-confidence "identifier immediately followed by another
+    #     identifier" shape — keywords are already consumed by bands 1–6 above.
+    #     [LIMIT] qualified types (`Ns.Type x`), casts `(Type)x`, and `is/as Type`
+    #     positions stay uncoloured (default text) — under-match over false positives.
+    - match: '{{begin}}({{ident}})(?=\s+{{ident}})'
+      scope: storage.type
+    # 12. operator catch-all — ALWAYS LAST (§8.2)
+    - match: '{{operator}}'
+      scope: keyword.operator
